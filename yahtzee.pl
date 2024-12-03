@@ -7,13 +7,13 @@
 
 % Consult all required files, in order.
 :- consult('utility.pl').
-%:- consult('validation.pl')
+:- consult('validation.pl').
 :- consult('game_data.pl').
 %:- consult('dice.pl')
 %:- consult('strategy.pl')
 %:- consult('validation2.pl')
 %:- consult('turn.pl')
-%:- consult('serialize.pl')
+:- consult('serialize.pl').
 %:- consult('rounds.pl')
 
 
@@ -25,9 +25,8 @@
  Reference: None
 ********************************************************************* */
 run_tournament :-
-    print_instructions.
-    %serialize_load(InitialGameData),
-    %initialize_game_data(InitialGameData, GameData),
+    print_instructions,
+    serialize_load(GameData).
     %print_scorecard(GameData),
     %run_rounds(GameData, FinalData),
     %print_final(FinalData).

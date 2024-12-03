@@ -151,6 +151,12 @@ print_category([Winner, Points, Round], CategoryNum) :-
            [CategoryNum, Name, Description, Score, Winner, Points, Round]),
     nl.
 
+/* *********************************************************************
+ Function Name: initialize_game_data
+ Purpose: Adds game state information onto serialized information, or create it from scratch
+ Reference: None
+ ********************************************************************* */
+
 
 
 /*
