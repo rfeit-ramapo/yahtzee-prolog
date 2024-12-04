@@ -9,25 +9,29 @@
 :- consult('utility.pl').
 :- consult('validation.pl').
 :- consult('game_data.pl').
-%:- consult('dice.pl')
+:- consult('dice.pl').
 %:- consult('strategy.pl')
 %:- consult('validation2.pl')
-%:- consult('turn.pl')
+:- consult('turn.pl').
 :- consult('serialize.pl').
-%:- consult('rounds.pl')
+:- consult('rounds.pl').
 
 
 /* *********************************************************************
  Function Name: run_tournament
  Purpose: The main function to kick off and run the tournament
- Parameters: None
- Return Value: None
  Reference: None
 ********************************************************************* */
+
+/* *************************************************
+run_tournament/0
+Parameters: None
+ ************************************************ */
+
 run_tournament :-
     print_instructions,
-    serialize_load(GameData).
-    %print_scorecard(GameData),
+    serialize_load(GameData),
+    print_scorecard(GameData).
     %run_rounds(GameData, FinalData),
     %print_final(FinalData).
 

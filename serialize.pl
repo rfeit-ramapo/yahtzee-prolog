@@ -11,8 +11,13 @@
  Reference: None
  ********************************************************************* */
 
-% serialize_load(-GameData)
-    % GameData is a game/4 structure loaded from the file, or freshly created.
+/* *************************************************
+serialize_load/1
+Parameters:
+    -GameData: game/4 structure loaded from the file, 
+        or freshly created.
+************************************************ */
+
 serialize_load(GameData) :-
     write("Would you like to load the game from a file? (y/n)"),
     nl,
@@ -22,19 +27,22 @@ serialize_load(GameData) :-
 
 /* *********************************************************************
  Function Name: load_file
- Purpose: Asks the user for a file name and loads it
+ Purpose: Loads a file if the user requests, or creates a new game
  Reference: None
  ********************************************************************* */
 
-% load_file(+Choice, -GameData)
-    % Choice is false if the user does not want to load a file.
-    % GameData is a game/4 structure freshly created for this game.
+/* *************************************************
+load_file/2
+Parameters:
+    +Choice: true if the user wants to load a file, 
+        false if they don't.
+    -GameData: game/4 structure loaded from the file, 
+        or freshly created.
+************************************************ */
+
 load_file(false, GameData) :-
     get_default_game_data(GameData).
 
-% load_file(+Choice, -GameData)
-    % Choice is true if the user wants to load a file.
-    % GameData is a game/4 structure loaded from the file.
 load_file(true, GameData) :-
     write("Please input the name of the file to load from."),
     nl,

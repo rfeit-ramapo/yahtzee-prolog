@@ -8,30 +8,34 @@
  Reference: None
  ********************************************************************* */
 
-% validate_yes_no(-Choice)
-    % Choice is true if the user entered 'y', false if 'n'
+/* *************************************************
+validate_yes_no/1
+Parameters:
+    -Choice: the player's decision with true for 'y' 
+        and false for 'n'.
+ ************************************************ */
+
  validate_yes_no(Choice) :-
     get_single_char(CharCode),
     char_code(Char, CharCode),
-    validate_yes_no(Choice, Char).
+    validate_yes_no(Char, Choice).
 
-% validate_yes_no(-Choice, +Char)
-    % Choice is true if the user entered 'y'
-    % Char is the character the user entered
-validate_yes_no(true, Char) :-
+/* *************************************************
+validate_yes_no/2
+Parameters:
+    +Char: the character the player entered.
+    -Choice: the player's decision with true for 'y' 
+        and false for 'n'.
+ ************************************************ */
+
+validate_yes_no(Char, true) :-
     (Char = 'y' ; Char = 'Y').
 
-% validate_yes_no(-Choice, +Char)
-    % Choice is false if the user entered 'n'
-    % Char is the character the user entered
-validate_yes_no(false, Char) :-
+validate_yes_no(Char, false) :-
     (Char = 'n' ; Char = 'N').
 
-% validate_yes_no(+Choice, +Char)
-    % Choice is the user's new input
-    % Char is the character the user previously entered
-    % If the user entered something other than 'y' or 'n', prompt again
-validate_yes_no(Choice, _) :-
+% If the user entered something other than 'y' or 'n', prompt again
+validate_yes_no(Char, _) :-
     write("Invalid input. Please enter 'y' or 'n'."),
     nl,
     validate_yes_no(Choice).
@@ -42,8 +46,12 @@ validate_yes_no(Choice, _) :-
  Reference: Used ChatGPT to learn about Prolog file & exception handling
  ********************************************************************* */
 
-% get_file_contents(-GameData)
-    % GameData is a game/4 structure loaded from the file.
+/* *************************************************
+get_file_contents/1
+Parameters:
+    -GameData: game/4 structure loaded from the file.
+ ************************************************ */
+
 % Get the file name from the user and attempt to load it.
 get_file_contents(GameData) :-
     read_line_to_string(user_input, FileName),
@@ -58,20 +66,20 @@ get_file_contents(GameData) :-
       _,
       (write("Error: Invalid file. Please try again."), nl, get_file_contents(GameData))).
 
-% get_file_contents(+RawData, +IsValid, -GameData)
-    % RawData is the raw data from the file.
-    % IsValid is true if the file contents are valid.
-    % GameData is a game/4 structure loaded from the file.
+/* *************************************************
+get_file_contents/3
+Parameters:
+    +RawData: the raw data from the file.
+    +IsValid: true if the file contents are valid.
+    -GameData: game/4 structure loaded from the file.
+ ************************************************ */
+
 % If the file contents are valid, set the game data.
 get_file_contents([Round, Scorecard], true, GameData) :-
     Dice = [[1, unlocked], [1, unlocked], [1, unlocked], [1, unlocked], [1, unlocked]],
     Strategy = [],
     GameData = game(Round, Scorecard, Dice, Strategy).
 
-% get_file_contents(+RawData, +IsValid, -GameData)
-    % RawData is the raw data from the file.
-    % IsValid is false if the file contents are invalid.
-    % GameData is a game/4 structure loaded from a newly attempted file.
 % If the file contents are invalid, prompt the user to try again.
 get_file_contents(_, false, GameData) :-
     write("Error: Invalid file contents. Please try again."),
@@ -84,17 +92,18 @@ get_file_contents(_, false, GameData) :-
  Reference: None
  ********************************************************************* */
 
-% validate_game_data(+RawData, -IsValid)
-    % RawData is the raw data from the file.
-    % IsValid is true in this case, since data properly validated.
+/* *************************************************
+validate_game_data/2
+Parameters:
+    +RawData: the raw data from the file.
+    -IsValid: true if the data is valid.
+ ************************************************ */
+
 validate_game_data([Round, Scorecard | []], true) :-
     integer(Round),
     is_list(Scorecard),
     validate_categories(Scorecard).
 
-% validate_game_data(+RawData, -IsValid)
-    % RawData is the raw data from the file.
-    % IsValid is false if the data is not properly validated.
 validate_game_data(_, false).
 
 /* *********************************************************************
@@ -103,22 +112,27 @@ validate_game_data(_, false).
  Reference: None
  ********************************************************************* */
 
-% validate_categories(+Scorecard, -IsValid)
-    % Scorecard is a list of categories from the loaded file.
+/* *************************************************
+validate_categories/1
+Parameters:
+    +Scorecard: a list of categories from the loaded file.
+ ************************************************ */
+
 % Kick off the validation process with initial scorecard
 validate_categories(Scorecard) :-
     validate_categories(Scorecard, 0).
 
-% validate_categories(+Scorecard, +Index)
-    % Scorecard is a list of categories from the loaded file.
-    % Index is the number of categories that were validated.
+/* *************************************************
+validate_categories/2
+Parameters:
+    +Scorecard: a list of categories from the loaded file.
+    +Index: the current category being validated.
+ ************************************************ */
+
 % Base cases: all categories were checked
 validate_categories([], 12).
 validate_categories([], _) :- fail.
 
-% validate_categories(+Scorecard, +Index)
-    % Scorecard is a list of categories from the loaded file.
-    % Index is the current category being validated.
 % Recursive case: validate the current category and move to the next
 validate_categories([Category | Rest], Index) :-
     validate_category(Category),
@@ -131,13 +145,34 @@ validate_categories([Category | Rest], Index) :-
  Reference: None
  ********************************************************************* */
 
-% validate_category(+Category)
-    % Category is [0] if not filled.
+/* *************************************************
+validate_category/1
+Parameters:
+    +Category: a single category from the loaded file.
+ ************************************************ */
+    
+% Category is [0] if not filled.
 validate_category([0]). 
 
-% validate_category(+Category)
-    % Category is [Points, Winner, Rounds] if filled.
+% Category is [Points, Winner, Rounds] if filled.
 validate_category([Points, Winner, Rounds]) :-
     integer(Points),
     (Winner = human; Winner = computer),
     integer(Rounds).
+
+/* *********************************************************************
+ Function Name: valid_die_face
+ Purpose: Validates an input to confirm it is a valid die face
+ Reference: None
+ ********************************************************************* */
+
+/* *************************************************
+valid_die_face/1
+Parameters:
+    +Die: the face of the die rolled.
+ ************************************************ */
+
+valid_die_face(Die) :-
+    Die >= 1,
+    Die <= 6.
+    
