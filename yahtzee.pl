@@ -31,8 +31,8 @@ Parameters: None
 run_tournament :-
     print_instructions,
     serialize_load(GameData),
-    print_scorecard(GameData).
-    %run_rounds(GameData, FinalData),
+    print_scorecard(GameData),
+    run_rounds(GameData, FinalData).
     %print_final(FinalData).
 
 % Automatically start running the program when loaded.

@@ -35,7 +35,7 @@ validate_yes_no(Char, false) :-
     (Char = 'n' ; Char = 'N').
 
 % If the user entered something other than 'y' or 'n', prompt again
-validate_yes_no(Char, _) :-
+validate_yes_no(_, Choice) :-
     write("Invalid input. Please enter 'y' or 'n'."),
     nl,
     validate_yes_no(Choice).
@@ -173,6 +173,100 @@ Parameters:
  ************************************************ */
 
 valid_die_face(Die) :-
-    Die >= 1,
-    Die <= 6.
+    integer(Die),               % Check that Die is an integer
+    between(1, 6, Die).         % Check that Die is in the range 1 to 6
     
+/* *********************************************************************
+ Function Name: validate_dice_faces
+ Purpose: Validates input of multiple dice faces [1-6]
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+validate_dice_faces/2
+Parameters:
+    +NumToRoll: the number of dice to roll.
+    -NewRolls: the list of input dice faces.
+ ************************************************ */
+
+% Case of valid input.
+validate_dice_faces(NumToRoll, NewRolls) :-
+    read_line_to_string(user_input, UserInput),
+    read_term_from_atom(UserInput, DiceList, []),
+    valid_dice_list(DiceList, NumToRoll),
+    NewRolls = DiceList.
+
+% Invalid input for multiple dice.
+validate_dice_faces(NumToRoll, NewRolls) :-
+    write("Error: Input must be a list of dice faces (e.g. [1, 2, 3].). Please try again."), nl,
+    validate_dice_faces(NumToRoll, NewRolls).
+
+% Invalid input for one die.
+validate_dice_faces(1, NewRolls) :-
+    write("Error: Input must be a list with one dice face (e.g. [1].). Please try again."), nl,
+    validate_dice_faces(1, NewRolls).
+
+/* *************************************************
+validate_dice_faces/2
+Parameters:
+    +NumToRoll: the number of dice to roll.
+    -Result: the list of input dice faces, or "h" if help was requested.
+    +HelpAllowed: true if the user can ask for help.
+ ************************************************ */
+
+% Valid input
+ validate_dice_faces(NumToRoll, Result, true) :-
+    read_line_to_string(user_input, UserInput),
+    % If the user asks for help, return "h"
+    (UserInput = "h", Result = "h" ; 
+     UserInput = "H", Result = "h" ;
+
+     % Otherwise, validate and return the dice list
+     read_term_from_atom(UserInput, DiceList, []),
+     valid_dice_list(DiceList, NumToRoll),
+     Result = DiceList).
+
+% Invalid input for multiple dice.
+validate_dice_faces(NumToRoll, NewRolls, true) :-
+    write("Error: Input must be a list of dice faces (e.g. [1, 2, 3].). Please try again."), nl,
+    validate_dice_faces(NumToRoll, NewRolls, true).
+
+% Invalid input for one die.
+validate_dice_faces(1, NewRolls, true) :-
+    write("Error: Input must be a list with one dice face (e.g. [1].). Please try again."), nl,
+    validate_dice_faces(1, NewRolls, true).
+
+/* *********************************************************************
+ Function Name: valid_dice_list
+ Purpose: Checks if a list of dice is valid
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+valid_dice_list/2
+Parameters:
+    +DiceList: the list of dice faces.
+    +NumToRoll: the number of dice to roll.
+ ************************************************ */
+
+% Check if the length of the list matches the number of dice to roll
+valid_dice_list(DiceList, NumToRoll) :-
+    is_list(DiceList),
+    length(DiceList, NumInput),
+    NumInput = NumToRoll,
+    valid_dice_list(DiceList).
+
+/* *************************************************
+valid_dice_list/1
+Parameters:
+    +DiceList: the list of dice faces.
+ ************************************************ */
+
+ % Base case: only one die to check
+ valid_dice_list([Die | []]) :-
+    valid_die_face(Die).
+
+% Recursive case: check the current die and move to the next
+valid_dice_list([Die | Rest]) :-
+    valid_die_face(Die),
+    valid_dice_list(Rest).

@@ -73,7 +73,7 @@ Parameters:
 get_default_game_data(GameData) :-
     Round = 1,
     Scorecard = [[0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0], [0]],
-    Dice = [[1, unlocked], [1, unlocked], [1, unlocked], [1, unlocked], [1, unlocked]],
+    Dice = [die(1, unlocked), die(1, unlocked), die(1, unlocked), die(1, unlocked), die(1, unlocked)],
     Strategy = [],
     GameData = game(Round, Scorecard, Dice, Strategy).
 
@@ -326,7 +326,21 @@ score_player([[Points, Winner, _] | Rest], Player, InScore, Score) :-
 score_player([_ | Rest], Player, InScore, Score) :-
     score_player(Rest, Player, InScore, Score).
 
+/* *********************************************************************
+ Function Name: get_dice
+ Purpose: Get the current dice set from the game data
+ Reference: None
+********************************************************************* */
 
+/* *************************************************
+get_dice/2
+Parameters:
+    +GameData: game/4 structure containing the current 
+        game state.
+    -Dice: the current dice set.
+ ************************************************ */
+
+get_round(game(_, _, Dice, _), Dice).
 
 /*
 /* *********************************************************************
