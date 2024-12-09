@@ -39,3 +39,25 @@ sum_list([], 0).
 sum_list([First | Rest], Sum) :-
     sum_list(Rest, SumRest),
     Sum is First + SumRest.
+
+
+/* *********************************************************************
+  Function Name: is_subset
+  Purpose: Checks if one list is a subset of another
+  Reference: None
+********************************************************************* */
+
+/* *************************************************
+is_subset/2
+Parameters:
+    +SubList: The list to check against a broader list.
+    +List: The broader list to check against.
+ ************************************************ */
+
+% Empty lists are always subsets of other lists.
+is_subset([], _).
+
+% If the first element of the sublist is in the broader list, check the rest.
+is_subset([First | Rest], List) :-
+    member(First, List),
+    is_subset(Rest, List).

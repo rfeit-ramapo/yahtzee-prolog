@@ -150,7 +150,7 @@ Parameters:
  ************************************************ */
 
  determine_dice(GameData, Player, NewSet) :-
-    list_available_categories(GameData, Player), % TODO
+    list_available_categories(GameData, Player),
     pursue_categories(GameData, Player, UpdatedGameData), % TODO
     handle_rerolls(UpdatedGameData, Player, NewSet). % TODO
 
@@ -170,7 +170,7 @@ Parameters:
 
 % Computer lists available categories
 list_available_categories(GameData, computer) :-
-    get_available_categories(GameData, AvailableCategories), % TODO
+    get_available_categories(GameData, AvailableCategories),
     nl, write("Listing all available categories, given the dice set so far..."), nl,
     write(AvailableCategories), nl.
 
@@ -178,4 +178,33 @@ list_available_categories(GameData, computer) :-
 list_available_categories(GameData, human) :-
     get_available_categories(GameData, AvailableCategories),
     write("Please list all available scorecard categories, given your current dice set."), nl,
-    validate_available_categories(AvailableCategories). % TODO
+    validate_available_categories(AvailableCategories).
+
+/* *********************************************************************
+ Function Name: pursue_categories
+ Purpose: To list the category or categories the player wants to pursue
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+pursue_categories/3
+Parameters:
+    +GameData: game/4 structure containing the 
+        current game state.
+    +Player: The player whose turn it is.
+    -UpdatedGameData: game/4 structure containing the 
+        game state after the player chooses a category.
+ ************************************************ */
+
+ pursue_categories(GameData, computer, UpdatedGameData) :-
+    pick_strategy(GameData, BestStrategy),
+    get_available_categories(GameData, PossibleCategories, false),
+    print_strategy(BestStrategy, computer), % TODO
+    update_strategy(GameData, BestStrategy, UpdatedGameData).
+
+pursue_categories(GameData, human, UpdatedGameData) :-
+    pick_strategy(GameData, BestStrategy),
+    get_available_categories(GameData, PossibleCategories, false),
+    write("Please input a list of categories you would like to pursue."), nl,
+    validate_pursue_categories(PossibleCategories, BestStrategy),
+    update_strategy(GameData, BestStrategy, UpdatedGameData).

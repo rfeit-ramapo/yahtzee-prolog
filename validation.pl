@@ -270,3 +270,55 @@ Parameters:
 valid_dice_list([Die | Rest]) :-
     valid_die_face(Die),
     valid_dice_list(Rest).
+
+/* *********************************************************************
+ Function Name: validate_available_categories
+ Purpose: Validates that the user input all available categories correctly
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+validate_available_categories/1
+Parameters:
+    +AvailableCategories: the list of available categories.
+************************************************ */
+
+validate_available_categories(AvailableCategories) :-
+    read_line_to_string(user_input, UserInput),
+    % If the user asks for help, give it and prompt again.
+    ((UserInput = "h" ; UserInput = "H"), 
+    write("The available categories are: "), write(AvailableCategories), nl,
+    validate_available_categories(AvailableCategories) ; 
+
+     % Otherwise, end recursion only if valid
+     read_term_from_atom(UserInput, InputCategories, []),
+     InputCategories = AvailableCategories ;
+     write("Error: Input must be a list of available categories that have at least one contributing die (e.g. [1,2,3]). Please try again."), nl,
+     validate_available_categories(AvailableCategories)).
+
+/* *********************************************************************
+ Function Name: validate_pursue_categories
+ Purpose: Validates that the user input a valid subset of available categories
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+validate_pursue_categories/2
+Parameters:
+    +AvailableCategories: the list of available categories.
+    +BestStrategy: the strategy to recommend if the
+        user asks for help.
+************************************************ */
+
+validate_pursue_categories(AvailableCategories, BestStrategy) :-
+    read_line_to_string(user_input, UserInput),
+    % If the user asks for help, give it and prompt again.
+    ((UserInput = "h" ; UserInput = "H"), 
+    print_strategy(BestStrategy, human),
+    validate_pursue_categories(AvailableCategories, BestStrategy) ; 
+
+     % Otherwise, end recursion only if valid
+     read_term_from_atom(UserInput, InputCategories, []),
+     is_subset(InputCategories, AvailableCategories) ;
+     write("Error: Input must be a subset of available categories that have at least one contributing die (e.g. [11, 12]). Please try again."), nl,
+     validate_pursue_categories(AvailableCategories, BestStrategy)).

@@ -35,8 +35,8 @@ Parameters:
  ************************************************ */
 
 get_available_categories(game(_, Scorecard, Dice, _), AvailableCategories, FilterRelevant) :-
-    check_category_strategies(Scorecard, Dice, StrategyList), % TODO
-    filter_available_strategies(StrategyList, FilterRelevant, AvailableCategories). % TODO
+    check_category_strategies(Scorecard, Dice, StrategyList),
+    filter_available_strategies(StrategyList, FilterRelevant, AvailableCategories).
 
 /* *********************************************************************
  Function Name: check_category_strategies
@@ -124,7 +124,7 @@ check_category_strategy(_, Dice, 11, Strategy) :-
 
 % Yahtzee
 check_category_strategy(_, Dice, 12, Strategy) :-
-    strategize_yahtzee(Dice, Strategy). % TODO
+    strategize_yahtzee(Dice, Strategy).
 
 /* *********************************************************************
  Function Name: strategize_multiples
@@ -906,4 +906,109 @@ get_yahtzee_target_list([MaxFace, MaxCount], _, _, TargetList) :-
 % If there is no mode, use an empty target list.
 get_yahtzee_target_list(_, _, _, []).
 
-% check out the strategizing result for a 5 straight for full house and yahtzee
+/* *********************************************************************
+ Function Name: filter_available_strategies
+ Purpose: To filter out strategies that are unavailable or have 0 contributing dice.
+          Creates a list of category indices based on the list.
+ Reference: None
+********************************************************************* */
+
+
+/* *************************************************
+filter_available_strategies/3
+Parameters:
+    +Strategies: The list of strategies to filter.
+    +FilterRelevant: true if only counting categories
+        that have at least one contributing die.
+    -AvailableStrategies: The list of available strategies.
+ ************************************************ */
+
+% Base case: start with an empty list of strategies.
+filter_available_strategies([], _, []).
+
+% Recursive case: if the strategy is 'none', skip it and filter the rest.
+filter_available_strategies([none | RestStrategies], false, AvailableStrategies) :-
+    filter_available_strategies(RestStrategies, false, AvailableStrategies).
+% Recursive case: add the category index to the list of available strategies.
+filter_available_strategies([CurrStrategy | RestStrategies], false, AvailableStrategies) :-
+    CurrStrategy = [_, _, _, _, Name],
+    get_category_index(Name, Index),
+    filter_available_strategies(RestStrategies, false, RestAvailableStrategies),
+    append([Index], RestAvailableStrategies, AvailableStrategies).
+
+% Recursive case: add the strategy to the list of available strategies if it is relevant.
+filter_available_strategies([CurrStrategy | RestStrategies], true, AvailableStrategies) :-
+    CurrStrategy = [CurrScore, _, _, _, Name],
+    get_category_index(Name, Index),
+    (Index > 6 ; CurrScore > 0),
+    filter_available_strategies(RestStrategies, true, RestAvailableStrategies),
+    append([Index], RestAvailableStrategies, AvailableStrategies).
+% Recursive case: skip the category otherwise.
+filter_available_strategies([_ | RestStrategies], true, AvailableStrategies) :-
+    filter_available_strategies(RestStrategies, true, AvailableStrategies).
+
+/* *********************************************************************
+ Function Name: pick_strategy
+ Purpose: To find the best strategy based on current game state
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+pick_strategy/2
+Parameters:
+    +GameData: The current game state.
+    -Strategy: The best strategy determined from the 
+        scorecard and dice.
+ ************************************************ */
+
+pick_strategy(game(_, Scorecard, Dice, _), Strategy) :-
+    check_category_strategies(Scorecard, Dice, Strategies),
+    find_best_strategy(Strategies, Strategy).
+
+/* *********************************************************************
+Function Name: find_best_strategy
+Purpose: To find the best strategy from a list of strategies
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+find_best_strategy/2
+Parameters:
+    +Strategies: The list of strategies to evaluate.
+    -BestStrategy: The best strategy determined from the list.
+ ************************************************ */
+
+% Base cases: handle empty and single-element lists.
+find_best_strategy([], none).
+find_best_strategy([Strategy], Strategy).
+
+find_best_strategy([CurrStrategy, NextStrategy | RestStrategies], BestStrategy) :-
+    CurrStrategy = [_, _, _, _, _],
+    NextStrategy = [_, _, _, _, _],
+    select_better_strategy(CurrStrategy, NextStrategy, BetterStrategy),
+    find_best_strategy([BetterStrategy | RestStrategies], BestStrategy).
+
+/* *********************************************************************
+Function Name: select_better_strategy
+Purpose: To select the better of two strategies based on their scores
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+select_better_strategy/3
+Parameters:
+    +Strategy1: The first strategy to compare.
+    +Strategy2: The second strategy to compare.
+    -BetterStrategy: The better of the two strategies.
+ ************************************************ */
+
+% If one strategy is 'none', return the other.
+select_better_strategy(none, Strategy2, Strategy2).
+select_better_strategy(Strategy1, none, Strategy1).
+
+% Otherwise, compare the scores of the two strategies.
+select_better_strategy(Strategy1, Strategy2, Strategy1) :-
+    Strategy1 = [_, MaxScore1, _, _, _],
+    Strategy2 = [_, MaxScore2, _, _, _],
+    MaxScore1 > MaxScore2.
+select_better_strategy(_, Strategy2, Strategy2).

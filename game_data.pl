@@ -340,7 +340,7 @@ Parameters:
     -Dice: the current dice set.
  ************************************************ */
 
-get_round(game(_, _, Dice, _), Dice).
+get_dice(game(_, _, Dice, _), Dice).
 
 /* *********************************************************************
  Function Name: update_dice
@@ -361,40 +361,47 @@ Parameters:
 update_dice(game(Round, Scorecard, _, Strategy), NewDice, NewGameData) :-
     NewGameData = game(Round, Scorecard, NewDice, Strategy).
 
-/*
 /* *********************************************************************
- Function Name: increment_round
- Purpose: Increment the round number in the game data
+ Function Name: get_category_index
+ Purpose: To get the category index from the category name
  Reference: None
- ********************************************************************* *\/
+********************************************************************* */
 
-% increment_round(+GameData, -NewGameData)
-    % GameData is a game/4 structure containing the current game state.
-    % NewGameData is a game/4 structure containing the updated game state.
-increment_round(game(Round, Scorecard, Dice, Strategy), NewGameData) :-
-    NewRound is Round + 1,
-    NewGameData = game(NewRound, Scorecard, Dice, Strategy).
+/* *************************************************
+get_category_index/2
+Parameters:
+    +Name: The name of the category.
+    -Index: The index of the category.
+ ************************************************ */
+
+get_category_index("Aces", 1).
+get_category_index("Twos", 2).
+get_category_index("Threes", 3).
+get_category_index("Fours", 4).
+get_category_index("Fives", 5).
+get_category_index("Sixes", 6).
+get_category_index("Three of a Kind", 7).
+get_category_index("Four of a Kind", 8).
+get_category_index("Full House", 9).
+get_category_index("Four Straight", 10).
+get_category_index("Five Straight", 11).
+get_category_index("Yahtzee", 12).
 
 /* *********************************************************************
- Function Name: print_scores
- Purpose: Print the scores for each player
+ Function Name: update_strategy
+ Purpose: Update the strategy in the game data
  Reference: None
- ********************************************************************* *\/
+********************************************************************* */
 
-% print_scores(+GameData)
-    % GameData is a game/4 structure containing the current game state.
-print_scores(GameData) :-
-    get_player_scores(GameData, Player1, Player2), % TODO
-    write("Player 1: "), write(Player1), nl,
+/* *************************************************
+update_strategy/3
+Parameters:
+    +GameData: game/4 structure containing the current 
+        game state.
+    +NewStrategy: the new strategy.
+    -NewGameData: game/4 structure containing the updated 
+        game state.
+ ************************************************ */
 
-
-get_dice(game(_, _, Dice, _), Dice).
-get_strategy(game(_, _, _, Strategy), Strategy).
-
-update_round(game(_, Scorecard, Dice, Strategy), NewRound, game(NewRound, Scorecard, Dice, Strategy)).
-update_scorecard(game(Round, _, Dice, Strategy), NewScorecard, game(Round, NewScorecard, Dice, Strategy)).
-update_dice(game(Round, Scorecard, _, Strategy), NewDice, game(Round, Scorecard, NewDice, Strategy)).
-update_strategy(game(Round, Scorecard, Dice, _), NewStrategy, game(Round, Scorecard, Dice, NewStrategy)).
-*/
-
-% hi there
+update_strategy(game(Round, Scorecard, Dice, _), NewStrategy, NewGameData) :-
+    NewGameData = game(Round, Scorecard, Dice, NewStrategy).
