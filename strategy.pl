@@ -983,8 +983,6 @@ find_best_strategy([], none).
 find_best_strategy([Strategy], Strategy).
 
 find_best_strategy([CurrStrategy, NextStrategy | RestStrategies], BestStrategy) :-
-    CurrStrategy = [_, _, _, _, _],
-    NextStrategy = [_, _, _, _, _],
     select_better_strategy(CurrStrategy, NextStrategy, BetterStrategy),
     find_best_strategy([BetterStrategy | RestStrategies], BestStrategy).
 
@@ -1012,3 +1010,172 @@ select_better_strategy(Strategy1, Strategy2, Strategy1) :-
     Strategy2 = [_, MaxScore2, _, _, _],
     MaxScore1 > MaxScore2.
 select_better_strategy(_, Strategy2, Strategy2).
+
+/* *********************************************************************
+Function Name: print_strategy
+Purpose: To print the strategy recommendation for a player or computer 
+         based on the provided strategy and dice configuration.
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+print_strategy/2
+Parameters:
+    +Strategy: The strategy to print.
+    +Player: The player to print the strategy for.
+ ************************************************ */
+
+% If the strategy is 'none', recommend standing.
+print_strategy(none, human) :-
+    write("I recommend that you stand because there are no fillable categories given your current dice set."), nl.
+print_strategy(none, computer) :-
+    write("The computer plans to stand because there are no fillable categories given its current dice set."), nl.
+
+% If max score is the same as current score, recommend standing.
+print_strategy([Score, Score, _, _, Name], human) :-
+    write("I recommend that you stand and fill the "), write(Name),
+    write(" category because it gives the maximum possible points ("), write(Score), write(") "), 
+    write("among all the options."), nl.
+print_strategy([Score, Score, _, _, Name], computer) :-
+    write("The computer plans to stand and fill the "), write(Name),
+    write(" category because it gives the maximum possible points ("), write(Score), write(") "), 
+    write("among all the options."), nl.
+
+% Recommend rerolling and trying for the best category.
+print_strategy([_, MaxScore, ToReroll, Target, Name], human) :-
+    write("I recommend that you reroll and try for the "), write(Name),
+    write(" category "), print_target_dice(Target, true),
+    write("because it gives the maximum possible points ("), write(MaxScore), write(") "), 
+    write("among all the options."), nl,
+    write("Therefore, "), print_target_dice(ToReroll, false), write(" should be rerolled."), nl.
+print_strategy([_, MaxScore, ToReroll, Target, Name], computer) :-
+    write("The computer plans to reroll and try for the "), write(Name),
+    write(" category "), print_target_dice(Target, true),
+    write("because it gives the maximum possible points ("), write(MaxScore), write(") "), 
+    write("among all the options."), nl,
+    write("Therefore, "), print_target_dice(ToReroll, false), write(" will be rerolled."), nl.
+
+/* *************************************************
+print_strategy/3
+Parameters:
+    +Strategy: The strategy to print.
+    +Player: The player to print the strategy for.
+    +IsSelecting: true if the player is choosing a category.
+ ************************************************ */
+
+% If IsSelecting is false, use default print_strategy.
+print_strategy(Strategy, Player, false) :-
+    print_strategy(Strategy, Player).
+
+% If the strategy is 'none', nothing can be done.
+print_strategy(none, human, true) :-
+    write("There are no fillable categories given your current dice set."), nl.
+print_strategy(none, computer, true) :-
+    write("There are no fillable categories given the current dice set."), nl.
+
+% Recommend what to fill.
+print_strategy([Score, Score, _, _, Name], human, true) :-
+    write("I recommend that you fill the "), write(Name),
+    write(" category because it gives the maximum possible points ("), write(Score), write(") "), 
+    write("among all the options."), nl.
+print_strategy([Score, Score, _, _, Name], computer, true) :-
+    write("The computer plans to fill the "), write(Name),
+    write(" category because it gives the maximum possible points ("), write(Score), write(") "), 
+    write("among all the options."), nl.
+
+/* *********************************************************************
+Function Name: print_target_dice
+Purpose: To print the target dice set for a strategy
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+print_target_dice/2
+Parameters:
+    +Target: The target dice set to print.
+    +PrintWith: Whether to print "with" beforehand.
+ ************************************************ */
+
+print_target_dice(Target, _) :-
+    (Target = [] ; Target = none ; Target = [0,0,0,0,0,0]).
+
+print_target_dice(Target, true) :-
+    sum_list(Target, ToPrint),
+    write("with "), print_target_dice(Target, 1, 0, ToPrint).
+
+print_target_dice(Target, false) :-
+    sum_list(Target, ToPrint),
+    print_target_dice(Target, 1, 0, ToPrint).
+
+/* *************************************************
+print_target_dice/4
+Parameters:
+    +Target: The target dice set to print.
+    +CurrFace: The current face being printed.
+    +TotalPrinted: The total number of dice faces printed.
+    +ToPrint: The total number of dice faces to print.
+ ************************************************ */
+
+% If no dice for this face, skip it.
+print_target_dice([0 | RestCount], CurrFace, TotalPrinted, ToPrint) :-
+    NextFace is CurrFace + 1,
+    print_target_dice(RestCount, NextFace, TotalPrinted, ToPrint).
+% Add "and" before the last die if there is more than 1 face.
+print_target_dice([FirstCount | _], CurrFace, TotalPrinted, ToPrint) :-
+    NextPrinted is FirstCount + TotalPrinted,
+    TotalPrinted \= 0,
+    NextPrinted = ToPrint,
+    write("and " ), print_target_die(CurrFace, FirstCount), write(" ").
+% If this is not the only face, print a comma.
+print_target_dice([FirstCount | RestCount], CurrFace, TotalPrinted, ToPrint) :-
+    FirstCount \= ToPrint,
+    print_target_die(CurrFace, FirstCount), write(", "), 
+    NextFace is CurrFace + 1,
+    NextPrinted is FirstCount + TotalPrinted,
+    print_target_dice(RestCount, NextFace, NextPrinted, ToPrint).
+% Fallback for only one dice face to print.
+print_target_dice([FirstCount | _], CurrFace, _, _) :-
+    print_target_die(CurrFace, FirstCount), write(" ").
+
+/* *********************************************************************
+Function Name: print_target_die
+Purpose: To print a string for a single target face
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+print_target_die/2
+Parameters:
+    +Face: The face value to print.
+    +Count: The number of dice with this face.
+ ************************************************ */
+
+print_target_die(1, 1) :-
+    write("1 Ace").
+print_target_die(1, Count) :-
+    write(Count), write(" Aces").
+
+print_target_die(2, 1) :-
+    write("1 Two").
+print_target_die(2, Count) :-  
+    write(Count), write(" Twos").
+
+print_target_die(3, 1) :-
+    write("1 Three").
+print_target_die(3, Count) :-
+    write(Count), write(" Threes").
+
+print_target_die(4, 1) :-
+    write("1 Four").
+print_target_die(4, Count) :-
+    write(Count), write(" Fours").
+
+print_target_die(5, 1) :-
+    write("1 Five").
+print_target_die(5, Count) :-  
+    write(Count), write(" Fives").
+
+print_target_die(6, 1) :-
+    write("1 Six").
+print_target_die(6, Count) :-
+    write(Count), write(" Sixes").

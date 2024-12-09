@@ -10,8 +10,7 @@
 :- consult('validation.pl').
 :- consult('game_data.pl').
 :- consult('dice.pl').
-%:- consult('strategy.pl')
-%:- consult('validation2.pl')
+:- consult('strategy.pl')
 :- consult('turn.pl').
 :- consult('serialize.pl').
 :- consult('rounds.pl').
