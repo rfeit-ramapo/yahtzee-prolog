@@ -41,52 +41,6 @@ validate_yes_no(_, Choice) :-
     validate_yes_no(Choice).
 
 /* *********************************************************************
- Function Name: get_file_contents
- Purpose: Gets a user-provided file until contents are valid
- Reference: Used ChatGPT to learn about Prolog file & exception handling
- ********************************************************************* */
-
-/* *************************************************
-get_file_contents/1
-Parameters:
-    -GameData: game/4 structure loaded from the file.
- ************************************************ */
-
-% Get the file name from the user and attempt to load it.
-get_file_contents(GameData) :-
-    read_line_to_string(user_input, FileName),
-    catch((
-        open(FileName, read, FileStream),
-        read(FileStream, RawData),
-        validate_game_data(RawData, IsValid),
-        get_file_contents(RawData, IsValid, GameData),
-        close(FileStream),
-        !
-       ),
-      _,
-      (write("Error: Invalid file. Please try again."), nl, get_file_contents(GameData))).
-
-/* *************************************************
-get_file_contents/3
-Parameters:
-    +RawData: the raw data from the file.
-    +IsValid: true if the file contents are valid.
-    -GameData: game/4 structure loaded from the file.
- ************************************************ */
-
-% If the file contents are valid, set the game data.
-get_file_contents([Round, Scorecard], true, GameData) :-
-    Dice = [[1, unlocked], [1, unlocked], [1, unlocked], [1, unlocked], [1, unlocked]],
-    Strategy = [],
-    GameData = game(Round, Scorecard, Dice, Strategy).
-
-% If the file contents are invalid, prompt the user to try again.
-get_file_contents(_, false, GameData) :-
-    write("Error: Invalid file contents. Please try again."),
-    nl,
-    get_file_contents(GameData).
-
-/* *********************************************************************
  Function Name: validate_game_data
  Purpose: Validates the raw data from the file
  Reference: None
@@ -400,3 +354,83 @@ valid_reroll_counts([], []).
 valid_reroll_counts([FirstFree | RestFree], [FirstReroll | RestReroll]) :-
     FirstReroll =< FirstFree,
     valid_reroll_counts(RestFree, RestReroll).
+
+/* *********************************************************************
+Function Name: validate_choose_category
+Purpose: Validates that the user inputs a valid category index
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+validate_choose_category/3
+Parameters:
+    +AvailableCategories: the list of available categories.
+    +Strategy: the strategy to recommend if the
+        user asks for help.
+    -ChosenCategory: the category index the player chose.
+************************************************ */
+
+validate_choose_category(AvailableCategories, Strategy, ChosenCategory) :-
+    read_line_to_string(user_input, UserInput),
+    % If the user asks for help, give it and prompt again.
+    ((UserInput = "h" ; UserInput = "H"), 
+    write("The available categories are: "), write(AvailableCategories), nl,
+    print_strategy(Strategy, human, true),
+    validate_choose_category(AvailableCategories, Strategy, ChosenCategory) ; 
+
+    read_term_from_atom(UserInput, ChosenCategory, []),
+    member(ChosenCategory, AvailableCategories)).
+
+validate_choose_category(AvailableCategories, Strategy, ChosenCategory) :-
+    write("Error: Input must be valid category index (e.g. '12' for Yahtzee). Please try again."), nl,
+    validate_choose_category(AvailableCategories, Strategy, ChosenCategory).
+
+/* *********************************************************************
+Function Name: validate_points
+Purpose: Validates that the user inputs a valid point total
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+validate_points/1
+Parameters:
+    +Points: the point total the player earned.
+************************************************ */
+
+validate_points(Points) :-
+    read_line_to_string(user_input, UserInput),
+    % If the user asks for help, give it and prompt again.
+    ((UserInput = "h" ; UserInput = "H"), 
+    write("You have earned "), write(Points), write(" points in this category."), nl,
+    validate_points(Points) ; 
+
+    read_term_from_atom(UserInput, Points, [])).
+
+validate_points(Points) :-
+    write("Error: Incorrect point total. Please try again."), nl,
+    validate_points(Points).
+
+/* *********************************************************************
+Function Name: validate_round
+Purpose: Validates that the user inputs a valid round number
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+validate_round/1
+Parameters:
+    +Round: the point total the player earned.
+************************************************ */
+
+validate_round(Round) :-
+    read_line_to_string(user_input, UserInput),
+    % If the user asks for help, give it and prompt again.
+    ((UserInput = "h" ; UserInput = "H"), 
+    write("The current round is: "), write(Round), write("."), nl,
+    validate_round(Round) ; 
+
+    read_term_from_atom(UserInput, Round, [])).
+
+validate_round(Round) :-
+    write("Error: Incorrect round number. Please try again."), nl,
+    validate_round(Round).

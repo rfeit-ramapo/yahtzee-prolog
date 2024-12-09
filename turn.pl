@@ -25,8 +25,10 @@ Parameters:
 
 run_turn(GameData, PlayerName, AfterTurn) :-
     print_turn_header(PlayerName),
-    handle_rolls(GameData, PlayerName, UpdatedGameData), % TODO
-    choose_category(UpdatedGameData, PlayerName, AfterTurn), % TODO
+    handle_rolls(GameData, PlayerName, UpdatedGameData),
+    UpdatedGameData = [Round, Scorecard, Dice, _],
+    toggle_dice_lock(Dice, unlocked, UnlockedDice),
+    AfterTurn = [Round, Scorecard, UnlockedDice, none],
     print_scorecard(AfterTurn).
 
 /* *************************************************
@@ -100,8 +102,9 @@ Parameters:
     -AfterRolls: game/4 structure containing the 
         game state after the rolls.
  ************************************************ */
+
  handle_rolls(GameData, Player, RollNumber, AfterRolls) :-
-    RollNumber <= 3,
+    RollNumber =< 3,
     print_roll_header(RollNumber),
 
     % Update game data with the new roll.
@@ -112,9 +115,18 @@ Parameters:
 
     % Update the dice by determining what to reroll.
     determine_dice(UpdatedGameData, Player, NewSet),
-    stand_or_reroll(UpdatedGameData, Player, RollNumber, NewSet, AfterRolls). % TODO
+    stand_or_reroll(UpdatedGameData, Player, RollNumber, NewSet, AfterRolls).
 
-% todo: handle after roll 3
+% Automatically lock dice and proceed to choose category on third roll.
+handle_rolls(GameData, Player, 3, AfterRolls) :-
+    print_roll_header(3),
+    get_dice(GameData, Dice),
+    roll_all(Dice, RollResult),
+    write("Roll Result: "), print_dice(RollResult),
+
+    toggle_dice_lock(RollResult, locked, UpdatedDice),
+    update_dice(GameData, UpdatedDice, UpdatedGameData),
+    choose_category(UpdatedGameData, Player, AfterRolls).
 
 /* *********************************************************************
  Function Name: print_roll_header
@@ -198,7 +210,7 @@ Parameters:
 
  pursue_categories(GameData, computer, UpdatedGameData) :-
     pick_strategy(GameData, BestStrategy),
-    get_available_categories(GameData, PossibleCategories, false),
+    get_available_categories(GameData, _, false),
     print_strategy(BestStrategy, computer),
     update_strategy(GameData, BestStrategy, UpdatedGameData).
 
@@ -233,7 +245,7 @@ handle_rerolls(game(_, _, Dice, [CurrScore, MaxScore | _]), computer, NewSet) :-
     toggle_dice_lock(Dice, locked, NewSet).
 
 % Lock any dice not being rerolled for the computer.
-handle_rerolls(game(_, _, Dice, [_, _, ToReroll, Target, _]), computer, NewSet) :-
+handle_rerolls(game(_, _, Dice, [_, _, ToReroll, _, _]), computer, NewSet) :-
     lock_other_dice(Dice, ToReroll, NewSet).
 
 % If the player chooses to reroll.
@@ -270,18 +282,65 @@ Parameters:
  ************************************************ */
 
 % If all dice are locked, move on to choose_category.
-stand_or_reroll(GameData, Player, RollNumber, NewSet, AfterRolls) :-
+stand_or_reroll(GameData, Player, _, NewSet, FinalGameData) :-
     filter_locked_dice(NewSet, LockedDice),
     length(LockedDice, LockedCount),
     LockedCount = 5,
     update_dice(GameData, NewSet, AfterRolls),
-    choose_category(AfterRolls, Player, FinalGameData). % TODO
+    choose_category(AfterRolls, Player, FinalGameData).
 
 % If not all dice are locked, reroll.
 stand_or_reroll(GameData, Player, RollNumber, NewSet, AfterRolls) :-
     update_dice(GameData, NewSet, UpdatedGameData),
     NextRoll is RollNumber + 1,
     handle_rolls(UpdatedGameData, Player, NextRoll, AfterRolls).
+
+/* *********************************************************************
+Function Name: choose_category
+Purpose: Chooses a category to fill based on the player's input or the best strategy.
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+choose_category/3
+Parameters:
+    +GameData: game/4 structure containing the 
+        current game state.
+    +Player: The player whose turn it is.
+    -AfterCategory: game/4 structure containing the 
+        game state after the player chooses a category.
+ ************************************************ */
+
+% Skip turn if no categories can be filled.
+choose_category(GameData, _, GameData) :-
+    get_available_categories(GameData, PossibleCategories, false),
+    PossibleCategories = [],
+    write("No categories can be filled with the current dice set. Skipping turn."), nl.
+
+% Computer chooses a category based on the best strategy.
+choose_category(GameData, computer, AfterTurn) :-
+    pick_strategy(GameData, BestStrategy),
+    BestStrategy = [CurrScore, _, _, _, Name],
+    get_category_index(Name, ChosenCategory),
+    print_strategy(BestStrategy, computer, true),
+    fill_category(GameData, computer, ChosenCategory, CurrScore, AfterTurn).
+
+% Player chooses a category.
+choose_category(GameData, human, AfterTurn) :-
+    GameData = [Round, _, Dice, _],
+    pick_strategy(GameData, BestStrategy),
+    write("Please choose a category to fill by its index."), nl,
+    get_available_categories(GameData, AvailableCategories, false),
+    validate_choose_category(AvailableCategories, BestStrategy, ChosenCategory),
+    check_category_strategy([0], Dice, ChosenCategory, ChosenStrategy),
+    ChosenStrategy = [PointsEarned | _],
+    write("Please input the points scored for this category."), nl,
+    validate_points(PointsEarned),
+    write("Please input the current round."), nl,
+    validate_round(Round),
+    fill_category(GameData, human, ChosenCategory, PointsEarned, AfterTurn).
+
+    
 
 % major things to do
 % print strategy functions [2]

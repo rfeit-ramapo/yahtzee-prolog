@@ -52,9 +52,9 @@ run_round(GameData, FinalData) :-
     print_round_header(RoundNum),
     get_player_order(GameData, Player1, Player2),
     run_turn(GameData, Player1, AfterTurn1),
-    run_turn(GameData, Player1, scorecard_filled(AfterTurn1), FinalData),
-    print_scores(FinalData), % TODO
-    serialize_save(FinalData). % TODO
+    run_turn(GameData, Player2, scorecard_filled(AfterTurn1), FinalData),
+    print_scores(FinalData),
+    serialize_save(FinalData).
 
 /* *********************************************************************
  Function Name: print_round_header
@@ -94,7 +94,7 @@ Parameters:
 get_player_order(GameData, Player1, Player2) :-
     write("Determining who will go first..."), nl,
     get_player_scores(GameData, HumanScore, ComputerScore),
-    order_players(HumanScore, ComputerScore, Player1, Player2). % TODO
+    order_players(HumanScore, ComputerScore, Player1, Player2).
 
 /* *********************************************************************
  Function Name: order_players

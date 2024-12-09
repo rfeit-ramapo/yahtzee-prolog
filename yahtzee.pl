@@ -10,7 +10,7 @@
 :- consult('validation.pl').
 :- consult('game_data.pl').
 :- consult('dice.pl').
-:- consult('strategy.pl')
+:- consult('strategy.pl').
 :- consult('turn.pl').
 :- consult('serialize.pl').
 :- consult('rounds.pl').
@@ -31,8 +31,8 @@ run_tournament :-
     print_instructions,
     serialize_load(GameData),
     print_scorecard(GameData),
-    run_rounds(GameData, FinalData).
-    %print_final(FinalData).
+    run_rounds(GameData, FinalData),
+    print_final(FinalData).
 
 % Automatically start running the program when loaded.
 :- run_tournament.

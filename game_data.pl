@@ -405,3 +405,103 @@ Parameters:
 
 update_strategy(game(Round, Scorecard, Dice, _), NewStrategy, NewGameData) :-
     NewGameData = game(Round, Scorecard, Dice, NewStrategy).
+
+/* *********************************************************************
+Function Name: fill_category
+Purpose: To fill a scorecard category with relevant information
+Reference: Used ChatGPT to help write the helper predicate
+********************************************************************* */
+
+/* *************************************************
+fill_category/5
+Parameters:
+    +GameData: game/4 structure containing the current 
+        game state.
+    +Player: the name of the player filling the category.
+    +Category: the index of the category to fill.
+    +Points: the number of points to fill the category with.
+    -UpdatedGameData: game/4 structure containing the updated 
+        game state.
+ ************************************************ */
+
+fill_category(game(Round, Scorecard, Dice, Strategy), Player, Category, Points, 
+              game(Round, UpdatedScorecard, Dice, Strategy)) :-
+    fill_scorecard(Category, Points, Player, Round, Scorecard, UpdatedScorecard).
+
+/* *********************************************************************
+fill_scorecard/5
+Purpose: Helper predicate to fill the scorecard at the specified category index.
+Parameters:
+    +Category: the index [1-12] of the category to fill.
+    +Points: the points earned for this category.
+    +Player: the name of the player filling the category.
+    +Round: the round this category was filled in.
+    +Scorecard: the original scorecard list.
+    -UpdatedScorecard: the updated scorecard list.
+********************************************************************* */
+
+fill_scorecard(1, Points, Player, Round, [_ | Rest], [[Points, Player, Round] | Rest]).
+fill_scorecard(Category, Points, Player, Round, [Head | Tail], [Head | UpdatedTail]) :-
+    Category > 1,
+    NextCategory is Category - 1,
+    fill_scorecard(NextCategory, Points, Player, Round, Tail, UpdatedTail).
+
+/* *********************************************************************
+Function Name: print_scores
+Purpose: To print the scores of both players
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+print_scores/1
+Parameters:
+    +GameData: game/4 structure containing the current 
+        game state.
+ ************************************************ */
+
+print_scores(GameData) :-
+    get_player_scores(GameData, HumanScore, ComputerScore),
+    write("Human Score: "), write(HumanScore), nl,
+    write("Computer Score: "), write(ComputerScore), nl.
+
+/* *********************************************************************
+Function Name: print_final
+Purpose: To print the final scores and winner of the game
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+print_final/1
+Parameters:
+    +GameData: game/4 structure containing the final 
+        game state.
+ ************************************************ */
+
+% Player win
+print_final(GameData) :-
+    get_player_scores(GameData, HumanScore, ComputerScore),
+    HumanScore > ComputerScore,
+    write("Final Scores:"), nl,
+    write("Human Score: "), write(HumanScore), nl,
+    write("Computer Score: "), write(ComputerScore), nl,
+    write("You won! Congratulations!"), nl, nl,
+    print_scorecard(GameData).
+
+% Computer win
+print_final(GameData) :-
+    get_player_scores(GameData, HumanScore, ComputerScore),
+    HumanScore < ComputerScore,
+    write("Final Scores:"), nl,
+    write("Human Score: "), write(HumanScore), nl,
+    write("Computer Score: "), write(ComputerScore), nl,
+    write("The computer won!"), nl, nl,
+    print_scorecard(GameData).
+
+% Tie
+print_final(GameData) :-
+    get_player_scores(GameData, HumanScore, ComputerScore),
+    write("Final Scores:"), nl,
+    write("Human Score: "), write(HumanScore), nl,
+    write("Computer Score: "), write(ComputerScore), nl,
+    write("There was a tie!"), nl, nl,
+    print_scorecard(GameData).
