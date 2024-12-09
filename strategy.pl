@@ -497,8 +497,7 @@ get_full_house_target_list([MaxFace1, MaxCount1], [MaxFace2, MaxCount2], [_, 0],
 get_full_house_target_list([MaxFace1, MaxCount1], _, [_, 0], _, _, TargetList) :-
     MaxCount1 > 1,
     add_dice([], [[MaxFace1, 3]], TargetList).
-get_full_house_target_list(_, _, [0, 0], _, _, TargetList) :-
-    TargetList = [].
+get_full_house_target_list(_, _, [_, 0], _, _, []).
 
 % If there is one locked face, use that face and the mode of the dice set.
 get_full_house_target_list([MaxFace1, MaxCount1], _, [LockedMax1, _], [_, 0], _, TargetList) :-
@@ -524,9 +523,10 @@ get_full_house_target_list(_, _, [LockedMax1, _], [LockedMax2, _], _, TargetList
 ********************************************************************* */
 
 /* *************************************************
-strategize_full_house/5
+strategize_straight/3
 Parameters:
     +Dice: The dice set to strategize for.
+    +StraightNum: The number of dice in the straight.
     -Strategy: The strategy determined for this category.
  ************************************************ */
 
@@ -794,3 +794,116 @@ check_straight_config(StraightNum, Value, TargetList, _, _, none) :-
 % Otherwise, return the target and reroll lists.
 check_straight_config(_, _, TargetList, ToReroll, NumRerolls, [NumRerolls, ToReroll, Target]) :-
     count_dice_faces(TargetList, Target).
+
+/* *********************************************************************
+ Function Name: strategize_yahtzee
+ Purpose: To create a strategy for the Yahtzee category
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+strategize_yahtzee/2
+Parameters:
+    +Dice: The dice set to strategize for.
+    -Strategy: The strategy determined for this category.
+ ************************************************ */
+
+strategize_yahtzee(Dice, Strategy) :-
+    % Get the score given the current dice set.
+    score_yahtzee(Dice, CurrentScore),
+    % Determine the target list and counts.
+    get_yahtzee_target_list(Dice, TargetList),
+    count_dice_faces(TargetList, Target),
+
+    % Extract data from the best config found.
+    count_free_unscored_dice(Dice, Target, ToReroll),
+
+    % Return a list representing the strategy.
+    strategize_yahtzee(CurrentScore, 50, ToReroll, TargetList, "Yahtzee", Strategy).
+
+/* *************************************************
+strategize_yahtzee/6
+Parameters:
+    +CurrentScore: The current score for this category.
+    +MaxScore: The maximum score possible for this category.
+    +ToReroll: The list of dice to reroll.
+    +Target: The target dice set to aim for.
+    +Name: The name of the category.
+    -Strategy: The strategy determined for this category.
+ ************************************************ */
+
+strategize_yahtzee(_, _, _, none, _, none).
+
+strategize_yahtzee(CurrentScore, MaxScore, ToReroll, TargetList, Name, 
+    [CurrentScore, MaxScore, ToReroll, Target, Name]) :-
+    count_dice_faces(TargetList, Target).
+
+/* *********************************************************************
+ Function Name: score_yahtzee
+ Purpose: To score a dice set for the Yahtzee category
+ Reference: None
+********************************************************************* */
+
+score_yahtzee(Dice, 0) :-
+    count_num_faces(Dice, NumFaces),
+    NumFaces > 1.
+
+score_yahtzee(_, 50).
+
+/* *********************************************************************
+ Function Name: get_yahtzee_target_list
+ Purpose: To generate a list of target dice for achieving Yahtzee
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+get_yahtzee_target_list/2
+Parameters:
+    +Dice: The current dice set.
+    -TargetList: The list of dice that would score 
+        maximum points for this category.
+ ************************************************ */
+
+get_yahtzee_target_list(Dice, TargetList) :-
+    count_dice_faces(Dice, DiceCounts),
+    % Get the first and second max dice faces.
+    max_dice_face(DiceCounts, Max),
+    % Get locked dice and face counts for them.
+    filter_locked_dice(Dice, LockedDice),
+    count_dice_faces(LockedDice, LockedCounts),
+    % Get max faces for locked dice.
+    max_dice_face(LockedCounts, LockedMax),
+    
+    count_num_faces(LockedCounts, NumFaces),
+
+    % Determine target list based on determined values.
+    get_yahtzee_target_list(Max, LockedMax, NumFaces, TargetList), !.
+
+/* *************************************************
+get_yahtzee_target_list/5
+Parameters:
+    +Max: The face of the max dice.
+    +LockedMax: The face of the max locked dice.
+    +NumFaces: The number of unique faces in the locked dice set.
+    -TargetList: The list of dice that would score 
+        maximum points for this category.
+ ************************************************ */
+
+% If there is more than one locked face, return 'none'.
+get_yahtzee_target_list(_, _, NumFaces, none) :-
+    NumFaces > 1.
+
+% If there is a locked face, use that.
+get_yahtzee_target_list(_, [LockedFace, LockedCount], _, TargetList) :-
+    LockedCount > 0,
+    add_dice([], [[LockedFace, 5]], TargetList).
+
+% Otherwise, use the mode of the dice set.
+get_yahtzee_target_list([MaxFace, MaxCount], _, _, TargetList) :-
+    MaxCount > 1,
+    add_dice([], [[MaxFace, 5]], TargetList).
+
+% If there is no mode, use an empty target list.
+get_yahtzee_target_list(_, _, _, []).
+
+% check out the strategizing result for a 5 straight for full house and yahtzee
