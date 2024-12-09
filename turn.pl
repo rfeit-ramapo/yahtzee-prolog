@@ -106,12 +106,15 @@ Parameters:
 
     % Update game data with the new roll.
     get_dice(GameData, Dice),
-    roll_all(Dice, RollResult), % TODO
-    write("Roll Result: "), print_dice(RollResult), % TODO
-    update_dice(GameData, RollResult, UpdatedGameData). % TODO
+    roll_all(Dice, RollResult),
+    write("Roll Result: "), print_dice(RollResult),
+    update_dice(GameData, RollResult, UpdatedGameData),
 
     % Update the dice by determining what to reroll.
-    % continue here later
+    determine_dice(UpdatedGameData, Player, NewSet), % TODO
+    stand_or_reroll(UpdatedGameData, Player, RollNumber, NewSet, AfterRolls). % TODO
+
+% todo: handle after roll 3
 
 /* *********************************************************************
  Function Name: print_roll_header
@@ -128,3 +131,51 @@ Parameters:
  print_roll_header(RollNumber) :-
     write("================================="), nl,
     write("Roll "), write(RollNumber), write(":"), nl, nl.
+
+/* *********************************************************************
+ Function Name: determine_dice
+ Purpose: Completes post-roll questions and has the player decide what to 
+          stand, or what to reroll
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+determine_dice/3
+Parameters:
+    +GameData: game/4 structure containing the 
+        current game state.
+    +Player: The player whose turn it is.
+    -NewSet: The new set of dice after the player 
+        decides what to reroll.
+ ************************************************ */
+
+ determine_dice(GameData, Player, NewSet) :-
+    list_available_categories(GameData, Player), % TODO
+    pursue_categories(GameData, Player, UpdatedGameData), % TODO
+    handle_rerolls(UpdatedGameData, Player, NewSet). % TODO
+
+/* *********************************************************************
+ Function Name: list_available_categories
+ Purpose: To list or validate player-input list of available categories
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+list_available_categories/2
+Parameters:
+    +GameData: game/4 structure containing the 
+        current game state.
+    +Player: The player whose turn it is.
+ ************************************************ */
+
+% Computer lists available categories
+list_available_categories(GameData, computer) :-
+    get_available_categories(GameData, AvailableCategories), % TODO
+    nl, write("Listing all available categories, given the dice set so far..."), nl,
+    write(AvailableCategories), nl.
+
+% Player lists available categories
+list_available_categories(GameData, human) :-
+    get_available_categories(GameData, AvailableCategories),
+    write("Please list all available scorecard categories, given your current dice set."), nl,
+    validate_available_categories(AvailableCategories). % TODO

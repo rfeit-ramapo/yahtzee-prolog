@@ -342,6 +342,25 @@ Parameters:
 
 get_round(game(_, _, Dice, _), Dice).
 
+/* *********************************************************************
+ Function Name: update_dice
+ Purpose: Update the dice set in the game data
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+update_dice/3
+Parameters:
+    +GameData: game/4 structure containing the current 
+        game state.
+    +NewDice: the new dice set.
+    -NewGameData: game/4 structure containing the updated 
+        game state.
+ ************************************************ */
+
+update_dice(game(Round, Scorecard, _, Strategy), NewDice, NewGameData) :-
+    NewGameData = game(Round, Scorecard, NewDice, Strategy).
+
 /*
 /* *********************************************************************
  Function Name: increment_round
