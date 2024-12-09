@@ -247,7 +247,8 @@ count_dice_face([die(Face, _) | RestDice], Face, Count) :-
     Count is RestCount + 1.
 
 % Recursive case: skip the first die if it doesn't match the face
-count_dice_face([_ | RestDice], Face, Count) :-
+count_dice_face([die(OtherFace, _) | RestDice], Face, Count) :-
+    OtherFace \= Face,
     count_dice_face(RestDice, Face, Count).
 
 /* *********************************************************************
@@ -316,29 +317,16 @@ Parameters:
     -Counts: A list of counts for each face value
  ************************************************ */
 
-count_dice_faces(Dice, Counts) :-
-    count_dice_faces(Dice, Counts, 1).
-
 count_dice_faces(none, [0,0,0,0,0,0]).
 
-/* *************************************************
-count_dice_faces/3
-Parameters:
-    +Dice: The list of dice to count
-    -Counts: A list of counts for each face value
-    +InitialFace: What face to start counting at
- ************************************************ */
-
-% Base case: no more faces to count
-count_dice_faces(_, [], 7).
-
-% Recursive case: count the current face and move to the next
-count_dice_faces(Dice, Counts, InitialFace) :-
-    InitialFace =< 6,
-    count_dice_face(Dice, InitialFace, Count),
-    NextFace is InitialFace + 1,
-    count_dice_faces(Dice, RestCounts, NextFace),
-    append([Count], RestCounts, Counts).
+count_dice_faces(Dice, Counts) :-
+    count_dice_face(Dice, 1, Count1),
+    count_dice_face(Dice, 2, Count2),
+    count_dice_face(Dice, 3, Count3),
+    count_dice_face(Dice, 4, Count4),
+    count_dice_face(Dice, 5, Count5),
+    count_dice_face(Dice, 6, Count6),
+    Counts = [Count1, Count2, Count3, Count4, Count5, Count6].
 
 /* *********************************************************************
  Function Name: count_free_unscored_dice
@@ -709,3 +697,147 @@ match_counts([CurrCount | RestCounts], [TargetCount | RestTargets], NeededDice, 
 match_counts([_ | RestCounts], [_ | RestTargets], NeededDice, Face, FinalNeededDice) :-
     NextFace is Face + 1,
     match_counts(RestCounts, RestTargets, NeededDice, NextFace, FinalNeededDice).
+
+/* *********************************************************************
+Function Name: lock_other_dice
+Purpose: Locks all dice that are not to be rerolled.
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+lock_other_dice/3
+Parameters:
+    +Dice: The list of dice to lock
+    +RerollCounts: Counts of how many of each face to
+        reroll
+    -FinalDice: The list of dice after locking
+ ************************************************ */
+
+ lock_other_dice(Dice, RerollCounts, FinalDice) :-
+    count_dice_faces(Dice, DiceCounts),
+    dice_difference(DiceCounts, RerollCounts, ToLock),
+    % Unlock all dice, then lock the required number.
+    toggle_dice_lock(Dice, unlocked, UnlockedDice),
+    lock_dice(UnlockedDice, ToLock, FinalDice).
+
+/* *********************************************************************
+Function Name: dice_difference
+Purpose: Gets the difference of two dice counts (counts1 - counts2) for each face
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+dice_difference/3
+Parameters:
+    +Counts1: The dice counts to subtract from
+    +Counts2: The dice counts to subtract
+    -Difference: The difference of the two lists
+ ************************************************ */
+
+ dice_difference([], [], []).
+
+dice_difference([Count1 | Rest1], [Count2 | Rest2], [Diff | RestDiff]) :-
+    Diff is Count1 - Count2,
+    dice_difference(Rest1, Rest2, RestDiff).
+
+/* *********************************************************************
+Function Name: toggle_dice_lock
+Purpose: Toggles all dice to be locked or unlocked
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+toggle_dice_lock/3
+Parameters:
+    +Dice: The list of dice to toggle
+    +Toggle: The state to toggle to
+    -FinalDice: The list of dice after toggling
+ ************************************************ */
+
+toggle_dice_lock([], _, []).
+
+toggle_dice_lock([die(Face, _) | RestDice], Toggle, [die(Face, Toggle) | RestFinalDice]) :-
+    toggle_dice_lock(RestDice, Toggle, RestFinalDice).
+
+/* *********************************************************************
+Function Name: lock_dice
+Purpose: Locks dice in a set according to specified counts
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+lock_dice/3
+Parameters:
+    +Dice: The list of dice to modify
+    +LockCounts: The counts of how many of each face to lock
+    -FinalDice: The list of dice after locking
+ ************************************************ */
+
+lock_dice(Dice, LockCounts, FinalDice) :-
+    lock_dice(Dice, LockCounts, 1, FinalDice).
+
+/* *************************************************
+lock_dice/4
+Parameters:
+    +Dice: The list of dice to modify
+    +LockCounts: The counts of how many of each face to lock
+    +Face: The current face being processed
+    -FinalDice: The list of dice after locking
+ ************************************************ */
+
+% Base case: no more faces to lock
+lock_dice(Dice, [], _, Dice).
+
+% If none of the current face need to be locked, move to the next face.
+lock_dice(Dice, [0 | RestLocks], Face, FinalDice) :-
+    NextFace is Face + 1,
+    lock_dice(Dice, RestLocks, NextFace, FinalDice).
+
+% Lock a die of the current face if required
+lock_dice(Dice, [LockCount | RestLocks], Face, FinalDice) :-
+    lock_die(Dice, Face, NewDice),
+    NextLock is LockCount - 1,
+    lock_dice(NewDice, [NextLock | RestLocks], Face, FinalDice).
+
+/* *********************************************************************
+Function Name: lock_die
+Purpose: Locks the first die found of a particular face value
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+lock_die/3
+Parameters:
+    +Dice: The list of dice to modify
+    +Face: The face value to lock
+    -FinalDice: The list of dice after locking
+ ************************************************ */
+
+% Base case: no more dice to check
+lock_die([], _, []).
+
+% If the first dice face is correct, and unlocked
+lock_die([die(Face, unlocked) | RestDice], Face, [die(Face, locked) | RestDice]).
+
+% Otherwise, keep iterating through the dice set
+lock_die([Die | RestDice], Face, [Die | FinalDice]) :-
+    lock_die(RestDice, Face, FinalDice).
+
+/* *********************************************************************
+Function Name: faces_to_dice
+Purpose: Converts a list of dice faces to a set of dice
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+faces_to_dice/2
+Parameters:
+    +Faces: The list of dice faces
+    -Dice: The list of dice
+ ************************************************ */
+
+faces_to_dice([], []).
+
+faces_to_dice([Face | RestFaces], [die(Face, unlocked) | RestDice]) :-
+    integer(Face),
+    faces_to_dice(RestFaces, RestDice).

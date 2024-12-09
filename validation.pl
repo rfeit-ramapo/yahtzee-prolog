@@ -322,3 +322,81 @@ validate_pursue_categories(AvailableCategories, BestStrategy) :-
      is_subset(InputCategories, AvailableCategories) ;
      write("Error: Input must be a subset of available categories that have at least one contributing die (e.g. [11, 12]). Please try again."), nl,
      validate_pursue_categories(AvailableCategories, BestStrategy)).
+
+/* *********************************************************************
+ Function Name: validate_stand_reroll
+ Purpose: Validates that the user input is either 'stand' or 'reroll'
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+validate_pursue_categories/2
+Parameters:
+    +Strategy: the strategy to recommend if the
+        user asks for help.
+    -Choice: the player's decision to stand or reroll.
+************************************************ */
+
+validate_stand_reroll(Strategy, Choice) :-
+    read_line_to_string(user_input, UserInput),
+    % If the user asks for help, give it and prompt again.
+    ((UserInput = "h" ; UserInput = "H"), 
+    print_strategy(Strategy, human),
+    validate_stand_reroll(Strategy, Choice) ; 
+    (UserInput = "stand" ; UserInput = "reroll"),
+    read_term_from_atom(UserInput, Choice, [])).
+
+validate_stand_reroll(Strategy, Choice) :-
+    write("Error: Input must be either 'stand' or 'reroll'. Please try again."), nl,
+    validate_stand_reroll(Strategy, Choice).
+
+/* *********************************************************************
+Function Name: validate_reroll
+Purpose: Validates that the user inputs a valid list of dice to reroll
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+validate_reroll/3
+Parameters:
+    +Strategy: the strategy to recommend if the
+        user asks for help.
+    +FreeCounts: the list of free dice faces.
+    -ToReroll: the list of dice faces to reroll.
+************************************************ */
+
+validate_reroll(Strategy, FreeCounts, RerollCounts) :-
+    read_line_to_string(user_input, UserInput),
+    % If the user asks for help, give it and prompt again.
+    ((UserInput = "h" ; UserInput = "H"), 
+    print_strategy(Strategy, human),
+    validate_reroll(Strategy, FreeCounts, RerollCounts) ; 
+
+    read_term_from_atom(UserInput, ToReroll, []),
+    faces_to_dice(ToReroll, RerollDice),
+    count_dice_faces(RerollDice, RerollCounts),
+    valid_reroll_counts(FreeCounts, RerollCounts) ;
+
+    write("Error: Input must be a list of free dice by their face values (e.g. [3, 3, 2]). Please try again."), nl,
+    validate_reroll(Strategy, FreeCounts, RerollCounts)).
+
+/* *********************************************************************
+Function Name: valid_reroll_counts
+Purpose: Checks if user-inputted reroll counts are valid
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+valid_reroll_counts/2
+Parameters:
+    +FreeCounts: the list of free dice faces.
+    +RerollCounts: the list of dice faces to reroll.
+************************************************ */
+
+% Base case: all dice checked and are valid
+valid_reroll_counts([], []).
+
+% Recursive case: check the current face and move to the next
+valid_reroll_counts([FirstFree | RestFree], [FirstReroll | RestReroll]) :-
+    FirstReroll =< FirstFree,
+    valid_reroll_counts(RestFree, RestReroll).

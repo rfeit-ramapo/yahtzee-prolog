@@ -111,7 +111,7 @@ Parameters:
     update_dice(GameData, RollResult, UpdatedGameData),
 
     % Update the dice by determining what to reroll.
-    determine_dice(UpdatedGameData, Player, NewSet), % TODO
+    determine_dice(UpdatedGameData, Player, NewSet),
     stand_or_reroll(UpdatedGameData, Player, RollNumber, NewSet, AfterRolls). % TODO
 
 % todo: handle after roll 3
@@ -151,8 +151,8 @@ Parameters:
 
  determine_dice(GameData, Player, NewSet) :-
     list_available_categories(GameData, Player),
-    pursue_categories(GameData, Player, UpdatedGameData), % TODO
-    handle_rerolls(UpdatedGameData, Player, NewSet). % TODO
+    pursue_categories(GameData, Player, UpdatedGameData),
+    handle_rerolls(UpdatedGameData, Player, NewSet).
 
 /* *********************************************************************
  Function Name: list_available_categories
@@ -199,7 +199,7 @@ Parameters:
  pursue_categories(GameData, computer, UpdatedGameData) :-
     pick_strategy(GameData, BestStrategy),
     get_available_categories(GameData, PossibleCategories, false),
-    print_strategy(BestStrategy, computer), % TODO
+    print_strategy(BestStrategy, computer),
     update_strategy(GameData, BestStrategy, UpdatedGameData).
 
 pursue_categories(GameData, human, UpdatedGameData) :-
@@ -208,3 +208,106 @@ pursue_categories(GameData, human, UpdatedGameData) :-
     write("Please input a list of categories you would like to pursue."), nl,
     validate_pursue_categories(PossibleCategories, BestStrategy),
     update_strategy(GameData, BestStrategy, UpdatedGameData).
+
+/* *********************************************************************
+Function Name: handle_rerolls
+Purpose: To handle locking dice based on what the player chooses to reroll
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+handle_rerolls/3
+Parameters:
+    +GameData: game/4 structure containing the 
+        current game state.
+    +Player: The player whose turn it is.
+    -NewSet: The updated diceset.
+ ************************************************ */
+
+% Lock all dice if no strategy, or if best strategy is to stand
+ handle_rerolls(game(_, _, Dice, BestStrategy), computer, NewSet) :-
+    BestStrategy = none,
+    toggle_dice_lock(Dice, locked, NewSet).
+handle_rerolls(game(_, _, Dice, [CurrScore, MaxScore | _]), computer, NewSet) :-
+    CurrScore = MaxScore,
+    toggle_dice_lock(Dice, locked, NewSet).
+
+% Lock any dice not being rerolled for the computer.
+handle_rerolls(game(_, _, Dice, [_, _, ToReroll, Target, _]), computer, NewSet) :-
+    lock_other_dice(Dice, ToReroll, NewSet).
+
+% If the player chooses to reroll.
+handle_rerolls(game(_, _, Dice, BestStrategy), human, NewSet) :-
+    write("Would you like to stand or reroll?"), nl,
+    validate_stand_reroll(BestStrategy, reroll),
+    write("Please input a list of dice faces to reroll."), nl,
+    filter_free_dice(Dice, FreeDice),
+    count_dice_faces(FreeDice, FreeCounts),
+    validate_reroll(BestStrategy, FreeCounts, ToReroll),
+    lock_other_dice(Dice, ToReroll, NewSet).
+
+
+% If the player chooses to stand, lock all dice.
+handle_rerolls(game(_, _, Dice, _), human, NewSet) :-
+    toggle_dice_lock(Dice, locked, NewSet).
+    
+/* *********************************************************************
+Function Name: stand_or_reroll
+Purpose: To control flow after a roll to either reroll or choosing a category
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+stand_or_reroll/5
+Parameters:
+    +GameData: game/4 structure containing the 
+        current game state.
+    +Player: The player whose turn it is.
+    +RollNumber: The current roll number.
+    +NewSet: The updated diceset.
+    -AfterRolls: game/4 structure containing the 
+        game state after the rolls.
+ ************************************************ */
+
+% If all dice are locked, move on to choose_category.
+stand_or_reroll(GameData, Player, RollNumber, NewSet, AfterRolls) :-
+    filter_locked_dice(NewSet, LockedDice),
+    length(LockedDice, LockedCount),
+    LockedCount = 5,
+    update_dice(GameData, NewSet, AfterRolls),
+    choose_category(AfterRolls, Player, FinalGameData). % TODO
+
+% If not all dice are locked, reroll.
+stand_or_reroll(GameData, Player, RollNumber, NewSet, AfterRolls) :-
+    update_dice(GameData, NewSet, UpdatedGameData),
+    NextRoll is RollNumber + 1,
+    handle_rolls(UpdatedGameData, Player, NextRoll, AfterRolls).
+
+% major things to do
+% print strategy functions [2]
+% handle rerolls [3]
+    % stand or reroll
+    % pick dice
+    % lock others
+% stand or reroll: based on if everything is locked! [1]
+    % simply redoes the handle_rolls function or moves on to choose_category
+% choose_category [2]
+    % computer and player version
+    % skipping turn functionality
+    % validate and/or print choice
+% finish up run_rounds [1]
+    % serialize save
+    % print scores
+% finish tournament [1]
+    % print final
+    % test everything
+
+% rough schedule for today
+% 1 - 2 handle rerolls (start)
+% 2 - 4 senior project class + finish handle rerolls
+    % try to sit in the back and work on this
+% 4 - 5 go to work and do stand or reroll
+% 5 - 6:30 choose category
+% 6:30 - 7:45 finish up run_rounds and tournament
+% go home
+% dinner & prep for other classes & tomorrow
