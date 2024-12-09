@@ -561,3 +561,151 @@ count_num_faces([0 | RestCounts], NumFaces, Count) :-
 count_num_faces([_ | Rest], NumFaces, Count) :-
     NewCount is Count + 1,
     count_num_faces(Rest, NumFaces, NewCount).
+
+/* *********************************************************************
+ Function Name: count_scored_locked_dice
+ Purpose: Get the dice that would score, or are locked from a set of dice counts
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+count_scored_locked_dice/4
+Parameters:
+    +DiceCounts: A list of counts for each die face
+    +LockedCounts: A list of locked counts for each 
+        die face
+    +ScoringCounts: A list of counts for each die face 
+        that score
+    -ScoredLocked: A list of dice counts for each face
+        that contribute to a score, or are locked
+ ************************************************ */
+
+count_scored_locked_dice([], [], [], []).
+
+count_scored_locked_dice([DiceCount | RestDiceCounts],
+                         [LockedCount | RestLockedCounts],
+                         [ScoringCount | RestScoringCounts],
+                         [ScoredLocked | RestScoredLocked]) :-
+    total_scored_dice(DiceCount, ScoringCount, TotalScored),
+    ScoredLocked is max(LockedCount, TotalScored),
+    count_scored_locked_dice(RestDiceCounts, RestLockedCounts, RestScoringCounts, RestScoredLocked).
+
+/* *********************************************************************
+ Function Name: total_scored_dice
+ Purpose: Count how many dice are scored for a single face
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+total_scored_dice/3
+Parameters:
+    +DiceCount: The total number of dice of this face
+    +ScoringCount: The number of dice of this face 
+        that score
+    -TotalScored: An integer representing how many dice 
+        of this face are scored
+ ************************************************ */
+
+total_scored_dice(DiceCount, ScoringCount, TotalScored) :-
+    TotalScored is min(DiceCount, ScoringCount).
+
+/* *********************************************************************
+ Function Name: counts_to_dice
+ Purpose: Convert a list of dice counts into a list of individual dice
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+counts_to_dice/2
+Parameters:
+    +Counts: A list of integers representing the counts of each die face.
+    -Dice: A list of individual dice.
+ ************************************************ */
+
+counts_to_dice(Counts, Dice) :-
+    counts_to_dice(Counts, 1, Dice).
+
+/* *************************************************
+counts_to_dice/3
+Parameters:
+    +Counts: A list of integers representing the counts 
+        of each die face.
+    +Face: The current face being processed.
+    -Dice: A list of individual dice for the current 
+        and remaining counts.
+ ************************************************ */
+
+% Base case: When no counts are left, the result is an empty list.
+counts_to_dice([], _, []).
+
+% Recursive case: Expand the current face count and continue processing.
+counts_to_dice([Count | RestCounts], Face, Dice) :-
+    expand_dice_face(Count, Face, ExpandedDice),
+    NextFace is Face + 1,
+    counts_to_dice(RestCounts, NextFace, RemainingDice),
+    append(ExpandedDice, RemainingDice, Dice).
+
+/* *********************************************************************
+ Function Name: expand_dice_face
+ Purpose: Expand a given face into a list of individual dice based on the count.
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+expand_dice_face/3
+Parameters:
+    +Count: An integer representing how many dice of this face exist.
+    +Face: The value of the face to expand.
+    -Dice: The resulting list of dice
+ ************************************************ */
+
+% Base case: When count is 0, no dice are added.
+expand_dice_face(0, _, []).
+
+% Recursive case: Add a die with the given face and process the remaining count.
+expand_dice_face(Count, Face, [die(Face, unlocked) | RestDice]) :-
+    Count > 0,
+    NextCount is Count - 1,
+    expand_dice_face(NextCount, Face, RestDice).
+
+/* *********************************************************************
+ Function Name: match_counts
+ Purpose: Match the current dice counts to the target, determining which dice are needed
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+match_counts/3
+Parameters:
+    +DiceCounts: The current dice counts.
+    +TargetCounts: The target dice counts.
+    -NeededDice: A list of dice needed, with 
+        sublists specifying the face and number required
+ ************************************************ */
+
+match_counts(DiceCounts, TargetCounts, NeededDice) :-
+    match_counts(DiceCounts, TargetCounts, [], 1, NeededDice), !.
+
+/* *************************************************
+match_counts/5
+Parameters:
+    +DiceCounts: The current dice counts.
+    +TargetCounts: The target dice counts.
+    +NeededDice: The current list of needed dice.
+    +Face: The current face being processed.
+    -FinalNeededDice: The final list of needed dice.
+ ************************************************ */
+
+% Base case: When no more faces are left, the result is the current list of needed dice.
+match_counts([], _, NeededDice, _, NeededDice).
+
+% Recursive case: Process the current face and continue with the remaining faces.
+match_counts([CurrCount | RestCounts], [TargetCount | RestTargets], NeededDice, Face, FinalNeededDice) :-
+    NumRerolls is TargetCount - CurrCount,
+    NumRerolls > 0,
+    append(NeededDice, [[Face, NumRerolls]], NewNeededDice),
+    NextFace is Face + 1,
+    match_counts(RestCounts, RestTargets, NewNeededDice, NextFace, FinalNeededDice).
+match_counts([_ | RestCounts], [_ | RestTargets], NeededDice, Face, FinalNeededDice) :-
+    NextFace is Face + 1,
+    match_counts(RestCounts, RestTargets, NeededDice, NextFace, FinalNeededDice).

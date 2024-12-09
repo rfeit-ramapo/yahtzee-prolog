@@ -118,9 +118,9 @@ check_category_strategy(_, Dice, 9, Strategy) :-
 
 % Straight
 check_category_strategy(_, Dice, 10, Strategy) :-
-    strategize_straight(Dice, 4, 30, "Four Straight", Strategy). % TODO
+    strategize_straight(Dice, 4, Strategy).
 check_category_strategy(_, Dice, 11, Strategy) :-
-    strategize_straight(Dice, 5, 40, "Five Straight", Strategy).
+    strategize_straight(Dice, 5, Strategy).
 
 % Yahtzee
 check_category_strategy(_, Dice, 12, Strategy) :-
@@ -517,3 +517,280 @@ get_full_house_target_list(_, _, [LockedMax1, _], [_, 0], _, TargetList) :-
 get_full_house_target_list(_, _, [LockedMax1, _], [LockedMax2, _], _, TargetList) :-
     add_dice([], [[LockedMax1, 3], [LockedMax2, 2]], TargetList).
 
+/* *********************************************************************
+ Function Name: strategize_straight
+ Purpose: To create a strategy for a straight category
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+strategize_full_house/5
+Parameters:
+    +Dice: The dice set to strategize for.
+    -Strategy: The strategy determined for this category.
+ ************************************************ */
+
+% Four Straight
+strategize_straight(Dice, 4, Strategy) :-
+    % Get the score given the current dice set.
+    score_straight(Dice, 4, 30, CurrentScore),
+    % Determine what should be rerolled based on free, unscoring dice and target values.
+    check_straight_configs(Dice, 4, ToReroll, Target),
+
+    % Return a list representing the strategy.
+    strategize_straight(CurrentScore, 30, ToReroll, Target, "Four Straight", Strategy).
+
+% Five Straight
+strategize_straight(Dice, 5, Strategy) :-
+    % Get the score given the current dice set.
+    score_straight(Dice, 5, 40, CurrentScore),
+    % Determine what should be rerolled based on free, unscoring dice and target values.
+    check_straight_configs(Dice, 5, ToReroll, Target),
+
+    % Return a list representing the strategy.
+    strategize_straight(CurrentScore, 40, ToReroll, Target, "Five Straight", Strategy).
+
+/* *************************************************
+strategize_straight/6
+Parameters:
+    +CurrentScore: The current score for this category.
+    +MaxScore: The maximum score possible for this category.
+    +ToReroll: The list of dice to reroll.
+    +Target: The target dice set to aim for.
+    +Name: The name of the category.
+    -Strategy: The strategy determined for this category.
+ ************************************************ */
+
+strategize_straight(_, _, _, none, _, none).
+
+strategize_straight(CurrentScore, MaxScore, ToReroll, Target, Name, 
+    [CurrentScore, MaxScore, ToReroll, Target, Name]).
+
+/* *********************************************************************
+ Function Name: score_straight
+ Purpose: To score a dice set for a Straight category
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+score_straight/4
+Parameters:
+    +Dice: The dice set to score.
+    +StraightNum: The number of dice in the straight.
+    +Value: The point value of this category.
+    -Score: The score for this dice set.
+ ************************************************ */
+
+score_straight(Dice, StraightNum, Value, Value) :-
+    count_dice_faces(Dice, DiceCounts),
+    has_streak(DiceCounts, StraightNum), !.
+
+score_straight(_, _, _, 0).
+
+/* *********************************************************************
+ Function Name: has_streak
+ Purpose: To determine whether a set of dice has a requisite "streak" 
+          (face values in a row)
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+has_streak/2
+Parameters:
+    +DiceCounts: The counts of each face in the dice set.
+    +StraightNum: The number of dice in the straight.
+ ************************************************ */
+
+has_streak(DiceCounts, StraightNum) :-
+    has_streak(DiceCounts, 0, StraightNum).
+
+/* *************************************************
+has_streak/3
+Parameters:
+    +DiceCounts: The counts of each face in the dice set.
+    +CurrentStreak: The current streak length.
+    +StraightNum: The number of dice in the straight.
+ ************************************************ */
+
+% Base case: If the streak has reached the required length, return true.
+has_streak(_, StraightNum, StraightNum).
+% Base case: If no streak and checked all dice, fail.
+has_streak([], _, _) :- fail.
+
+% Recursive case: If the current face has a count of 1, increment the streak.
+has_streak([CurrCount | RestCounts], CurrentStreak, StraightNum) :-
+    CurrCount > 0,
+    NextStreak is CurrentStreak + 1,
+    has_streak(RestCounts, NextStreak, StraightNum).
+% Recursive case: If the current face has a count of 0, reset the streak.
+has_streak([0 | RestCounts], _, StraightNum) :-
+    has_streak(RestCounts, 0, StraightNum).
+
+/* *********************************************************************
+ Function Name: check_straight_configs
+ Purpose: To evaluate the current dice configuration for completing
+          a straight category
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+check_straight_configs/4
+Parameters:
+    +Dice: The current dice set.
+    +StraightNum: The number of dice in the straight.
+    -ToReroll: The list of dice to reroll.
+    -Target: The target dice set to aim for.
+ ************************************************ */
+
+% Four Straight
+check_straight_configs(Dice, 4, ToReroll, Target) :-
+    Config1 = [1, 1, 1, 1, 0, 0],
+    Config2 = [0, 1, 1, 1, 1, 0],
+    Config3 = [0, 0, 1, 1, 1, 1],
+    check_straight_config(Dice, 4, 30, Config1, ConfigResult1),
+    check_straight_config(Dice, 4, 30, Config2, ConfigResult2),
+    check_straight_config(Dice, 4, 30, Config3, ConfigResult3),
+    check_straight_configs(Dice, ConfigResult1, ConfigResult2, ConfigResult3, ToReroll, Target).
+
+% Five Straight
+check_straight_configs(Dice, 5, ToReroll, Target) :-
+    Config1 = [1, 1, 1, 1, 1, 0],
+    Config2 = [0, 1, 1, 1, 1, 1],
+    check_straight_config(Dice, 5, 40, Config1, ConfigResult1),
+    check_straight_config(Dice, 5, 40, Config2, ConfigResult2),
+    check_straight_configs(Dice, ConfigResult1, ConfigResult2, ToReroll, Target).
+
+/* *************************************************
+check_straight_configs/5
+Parameters:
+    +Dice: The current dice set.
+    +ConfigResult1: The result of the first configuration.
+    +ConfigResult2: The result of the second configuration.
+    -ToReroll: The list of dice to reroll.
+    -Target: The target dice set to aim for.
+ ************************************************ */
+
+% Return config 1 if it is the only possible or has the least dice to reroll.
+check_straight_configs(_, ConfigResult1, ConfigResult2, ToReroll, Target) :-
+    ConfigResult1 = [_, ToReroll, Target],
+    ConfigResult2 = none.
+check_straight_configs(_, ConfigResult1, ConfigResult2, ToReroll, Target) :-
+    ConfigResult1 = [NumRerolls1, ToReroll, Target],
+    ConfigResult2 = [NumRerolls2, _, _],
+    NumRerolls1 < NumRerolls2.
+
+% Otherwise return config 2 if it worked.
+check_straight_configs(_, _, ConfigResult2, ToReroll, Target) :-
+    ConfigResult2 = [_, ToReroll, Target].
+
+% Otherwise, return 'none'.
+check_straight_configs(_, _, _, none, none).
+    
+
+/* *************************************************
+check_straight_configs/6
+Parameters:
+    +Dice: The current dice set.
+    +ConfigResult1: The result of the first configuration.
+    +ConfigResult2: The result of the second configuration.
+    +ConfigResult3: The result of the third configuration.
+    -ToReroll: The list of dice to reroll.
+    -Target: The target dice set to aim for.
+ ************************************************ */
+
+% Return config 1 if it is the only possible or has the least dice to reroll.
+check_straight_configs(_, ConfigResult1, ConfigResult2, ConfigResult3, ToReroll, Target) :-
+    ConfigResult1 = [_, ToReroll, Target],
+    ConfigResult2 = none,
+    ConfigResult3 = none.
+check_straight_configs(_, ConfigResult1, ConfigResult2, ConfigResult3, ToReroll, Target) :-
+    ConfigResult1 = [NumRerolls1, ToReroll, Target],
+    ConfigResult2 = [NumRerolls2, _, _],
+    ConfigResult3 = none,
+    NumRerolls1 < NumRerolls2.
+check_straight_configs(_, ConfigResult1, ConfigResult2, ConfigResult3, ToReroll, Target) :-
+    ConfigResult1 = [NumRerolls1, ToReroll, Target],
+    ConfigResult2 = none,
+    ConfigResult3 = [NumRerolls3, _, _],
+    NumRerolls1 < NumRerolls3.
+check_straight_configs(_, ConfigResult1, ConfigResult2, ConfigResult3, ToReroll, Target) :-
+    ConfigResult1 = [NumRerolls1, ToReroll, Target],
+    ConfigResult2 = [NumRerolls2, _, _],
+    ConfigResult3 = [NumRerolls3, _, _],
+    NumRerolls1 < NumRerolls2,
+    NumRerolls1 < NumRerolls3.
+
+% Return config 2 if it is the only possible or has the least dice to reroll.
+check_straight_configs(_, _, ConfigResult2, ConfigResult3, ToReroll, Target) :-
+    ConfigResult2 = [_, ToReroll, Target],
+    ConfigResult3 = none.
+check_straight_configs(_, _, ConfigResult2, ConfigResult3, ToReroll, Target) :-
+    ConfigResult2 = [NumRerolls2, ToReroll, Target],
+    ConfigResult3 = [NumRerolls3, _, _],
+    NumRerolls2 < NumRerolls3.
+
+% Return config 3 if it is the only possible or has the least dice to reroll.
+check_straight_configs(_, _, _, ConfigResult3, ToReroll, Target) :-
+    ConfigResult3 = [_, ToReroll, Target].
+
+% Otherwise, return 'none'.
+check_straight_configs(_, _, _, _, none, none).
+
+/* *********************************************************************
+ Function Name: check_straight_config
+ Purpose: To evaluate if the current dice configuration can complete a 
+          straight category
+ Reference: None
+********************************************************************* */
+
+/* *************************************************
+check_straight_config/5
+Parameters:
+    +Dice: The current dice set.
+    +StraightNum: The number of dice in the straight.
+    +Value: The point value of this category.
+    +Config: The configuration to check.
+    -ConfigResult: The result of the configuration.
+ ************************************************ */
+
+check_straight_config(Dice, StraightNum, Value, Config, ConfigResult) :-
+    count_free_unscored_dice(Dice, Config, ToReroll),
+
+    % Find counts of which dice are either already scoring, or are locked.
+    count_dice_faces(Dice, DiceCounts),
+    filter_locked_dice(Dice, LockedDice),
+    count_dice_faces(LockedDice, LockedCounts),
+    count_scored_locked_dice(DiceCounts, LockedCounts, Config, ScoringOrLocked),
+
+    % Turn scoring-or-locked into a list of dice that cannot be altered.
+    counts_to_dice(ScoringOrLocked, SetList),
+    % Rerolls required is 5 (total dice) - length of the set list.
+    length(SetList, LengthSetList),
+    NumRerolls is 5 - LengthSetList,
+    % Find which dice need to be added to complete the configuration.
+    match_counts(DiceCounts, Config, Replacements),
+    % Add the required dice to the list if possible.
+    add_dice(SetList, Replacements, Target),
+
+    % Return the result in a list.
+    check_straight_config(StraightNum, Value, Target, ToReroll, NumRerolls, ConfigResult).
+
+/* *************************************************
+check_straight_config/6
+Parameters:
+    +StraightNum: The number of dice in the straight.
+    +Value: The point value of this category.
+    +TargetList: The target dice set to aim for.
+    +ToReroll: The list of dice to reroll.
+    +NumRerolls: The number of dice to reroll.
+    -ConfigResult: The result of the configuration.
+ ************************************************ */
+
+% If target does not score, return 'none'.
+check_straight_config(StraightNum, Value, TargetList, _, _, none) :-
+    score_straight(TargetList, StraightNum, Value, Score),
+    Score = 0.
+
+% Otherwise, return the target and reroll lists.
+check_straight_config(_, _, TargetList, ToReroll, NumRerolls, [NumRerolls, ToReroll, Target]) :-
+    count_dice_faces(TargetList, Target).
