@@ -844,11 +844,14 @@ strategize_yahtzee(CurrentScore, MaxScore, ToReroll, TargetList, Name,
  Reference: None
 ********************************************************************* */
 
-score_yahtzee(Dice, 0) :-
-    count_num_faces(Dice, NumFaces),
-    NumFaces > 1.
+score_yahtzee(Dice, Score) :-
+    count_dice_faces(Dice, DiceCounts),
+    count_num_faces(DiceCounts, NumFaces),
+    score_yahtzee_helper(NumFaces, Score).
 
-score_yahtzee(_, 50).
+score_yahtzee_helper(NumFaces, 50) :-
+    NumFaces = 1.
+score_yahtzee_helper(_, 0).
 
 /* *********************************************************************
  Function Name: get_yahtzee_target_list
@@ -1047,13 +1050,13 @@ print_strategy([_, MaxScore, ToReroll, Target, Name], human) :-
     write(" category "), print_target_dice(Target, true),
     write("because it gives the maximum possible points ("), write(MaxScore), write(") "), 
     write("among all the options."), nl,
-    write("Therefore, "), print_target_dice(ToReroll, false), write(" should be rerolled."), nl.
+    write("Therefore, "), print_target_dice(ToReroll, false), write("should be rerolled."), nl.
 print_strategy([_, MaxScore, ToReroll, Target, Name], computer) :-
     write("The computer plans to reroll and try for the "), write(Name),
     write(" category "), print_target_dice(Target, true),
     write("because it gives the maximum possible points ("), write(MaxScore), write(") "), 
     write("among all the options."), nl,
-    write("Therefore, "), print_target_dice(ToReroll, false), write(" will be rerolled."), nl.
+    write("Therefore, "), print_target_dice(ToReroll, false), write("will be rerolled."), nl.
 
 /* *************************************************
 print_strategy/3

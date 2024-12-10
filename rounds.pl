@@ -55,7 +55,8 @@ run_round(GameData, FinalData) :-
     scorecard_filled(AfterTurn1, Filled),
     run_turn(AfterTurn1, Player2, Filled, FinalData),
     print_scores(FinalData),
-    serialize_save(FinalData).
+    increment_round(FinalData, NewRoundData),
+    serialize_save(NewRoundData).
 
 /* *********************************************************************
  Function Name: print_round_header

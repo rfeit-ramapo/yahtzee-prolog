@@ -86,8 +86,8 @@ Parameters:
 
 % If the file contents are valid, set the game data.
 get_file_contents([Round, Scorecard], true, GameData) :-
-    Dice = [[1, unlocked], [1, unlocked], [1, unlocked], [1, unlocked], [1, unlocked]],
-    Strategy = [],
+    Dice = [die(1, unlocked), die(1, unlocked), die(1, unlocked), die(1, unlocked), die(1, unlocked)],
+    Strategy = none,
     GameData = game(Round, Scorecard, Dice, Strategy).
 
 % If the file contents are invalid, prompt the user to try again.
@@ -130,12 +130,13 @@ Parameters:
 
 save_file(false, _).
 
-save_file(true, GameData) :-
+save_file(true, game(Round, Scorecard, _, _)) :-
     write("Please input the name of the file to save to."),
     nl,
     read_line_to_string(user_input, FileName),
     open(FileName, write, FileStream),
-    write(FileStream, GameData),
+    write(FileStream, [Round, Scorecard]),
+    write(FileStream, '.'),
     close(FileStream),
     write("Successfully saved file!"),
     nl, nl.

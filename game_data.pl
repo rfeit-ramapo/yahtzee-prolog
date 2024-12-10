@@ -181,7 +181,7 @@ print_category([0], CategoryNum) :-
     nl.
 
 % Case where the category has been filled.
-print_category([Winner, Points, Round], CategoryNum) :-
+print_category([Points, Winner, Round], CategoryNum) :-
     % Fetch category information.
     category_info(CategoryNum, [Name, Description, Score]),
     % Print the category details with proper spacing.
@@ -478,34 +478,34 @@ Parameters:
         game state.
  ************************************************ */
 
-% Player win
 print_final(GameData) :-
     get_player_scores(GameData, HumanScore, ComputerScore),
-    HumanScore > ComputerScore,
     write("Final Scores:"), nl,
     write("Human Score: "), write(HumanScore), nl,
     write("Computer Score: "), write(ComputerScore), nl,
-    write("You won! Congratulations!"), nl, nl,
+    print_final(HumanScore, ComputerScore),
     print_scorecard(GameData).
+
+/* *************************************************
+print_final/2
+Parameters:
+    +HumanScore: the score of the human player.
+    +ComputerScore: the score of the computer player.
+ ************************************************ */
+
+ % Human win
+print_final(HumanScore, ComputerScore) :-
+    HumanScore > ComputerScore,
+    write("You won! Congratulations!"), nl, nl.
 
 % Computer win
-print_final(GameData) :-
-    get_player_scores(GameData, HumanScore, ComputerScore),
+print_final(HumanScore, ComputerScore) :-
     HumanScore < ComputerScore,
-    write("Final Scores:"), nl,
-    write("Human Score: "), write(HumanScore), nl,
-    write("Computer Score: "), write(ComputerScore), nl,
-    write("The computer won!"), nl, nl,
-    print_scorecard(GameData).
+    write("The computer won!"), nl, nl.
 
 % Tie
-print_final(GameData) :-
-    get_player_scores(GameData, HumanScore, ComputerScore),
-    write("Final Scores:"), nl,
-    write("Human Score: "), write(HumanScore), nl,
-    write("Computer Score: "), write(ComputerScore), nl,
-    write("There was a tie!"), nl, nl,
-    print_scorecard(GameData).
+print_final(_, _) :-
+    write("There was a tie!"), nl, nl.
 
 /* *********************************************************************
 Function Name: increment_round
