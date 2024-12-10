@@ -36,7 +36,7 @@ Parameters:
 
 get_available_categories(game(_, Scorecard, Dice, _), AvailableCategories, FilterRelevant) :-
     check_category_strategies(Scorecard, Dice, StrategyList),
-    filter_available_strategies(StrategyList, FilterRelevant, AvailableCategories).
+    filter_available_strategies(StrategyList, FilterRelevant, AvailableCategories), !.
 
 /* *********************************************************************
  Function Name: check_category_strategies

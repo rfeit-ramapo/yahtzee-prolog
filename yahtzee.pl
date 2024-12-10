@@ -35,4 +35,4 @@ run_tournament :-
     print_final(FinalData).
 
 % Automatically start running the program when loaded.
-:- run_tournament.
+% :- run_tournament.

@@ -196,16 +196,17 @@ print_category([Winner, Points, Round], CategoryNum) :-
 ********************************************************************* */
 
 /* *************************************************
-scorecard_filled/1
+scorecard_filled/2
 Parameters:
     +GameData: game/4 structure containing the current 
         game state.
  ************************************************ */
 
-scorecard_filled(GameData) :-
+scorecard_filled(GameData, true) :-
     get_scorecard(GameData, Scorecard),
     count_full_categories(Scorecard, Count),
     Count = 12.
+scorecard_filled(_, false).
 
 /* *********************************************************************
  Function Name: count_full_categories
@@ -426,7 +427,7 @@ Parameters:
 
 fill_category(game(Round, Scorecard, Dice, Strategy), Player, Category, Points, 
               game(Round, UpdatedScorecard, Dice, Strategy)) :-
-    fill_scorecard(Category, Points, Player, Round, Scorecard, UpdatedScorecard).
+    fill_scorecard(Category, Points, Player, Round, Scorecard, UpdatedScorecard), !.
 
 /* *********************************************************************
 fill_scorecard/5
@@ -505,3 +506,22 @@ print_final(GameData) :-
     write("Computer Score: "), write(ComputerScore), nl,
     write("There was a tie!"), nl, nl,
     print_scorecard(GameData).
+
+/* *********************************************************************
+Function Name: increment_round
+Purpose: To increment the round number in the game data
+Reference: None
+********************************************************************* */
+
+/* *************************************************
+increment_round/2
+Parameters:
+    +GameData: game/4 structure containing the current 
+        game state.
+    -NewGameData: game/4 structure containing the updated 
+        game state.
+ ************************************************ */
+
+increment_round(game(Round, Scorecard, Dice, Strategy), 
+                game(NewRound, Scorecard, Dice, Strategy)) :-
+    NewRound is Round + 1.

@@ -293,14 +293,26 @@ Parameters:
 
 validate_stand_reroll(Strategy, Choice) :-
     read_line_to_string(user_input, UserInput),
-    % If the user asks for help, give it and prompt again.
-    ((UserInput = "h" ; UserInput = "H"), 
-    print_strategy(Strategy, human),
-    validate_stand_reroll(Strategy, Choice) ; 
-    (UserInput = "stand" ; UserInput = "reroll"),
-    read_term_from_atom(UserInput, Choice, [])).
+    validate_input(UserInput, Strategy, Choice).
 
-validate_stand_reroll(Strategy, Choice) :-
+% Case for user asking for help
+validate_input("h", Strategy, Choice) :-
+    print_strategy(Strategy, human),
+    validate_stand_reroll(Strategy, Choice).
+
+validate_input("H", Strategy, Choice) :-
+    print_strategy(Strategy, human),
+    validate_stand_reroll(Strategy, Choice).
+
+% Case for valid inputs: 'stand' or 'reroll'
+validate_input("stand", _, Choice) :-
+    Choice = stand.
+
+validate_input("reroll", _, Choice) :-
+    Choice = reroll.
+
+% Catch-all case for invalid inputs
+validate_input(_, Strategy, Choice) :-
     write("Error: Input must be either 'stand' or 'reroll'. Please try again."), nl,
     validate_stand_reroll(Strategy, Choice).
 

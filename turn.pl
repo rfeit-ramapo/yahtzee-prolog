@@ -26,9 +26,9 @@ Parameters:
 run_turn(GameData, PlayerName, AfterTurn) :-
     print_turn_header(PlayerName),
     handle_rolls(GameData, PlayerName, UpdatedGameData),
-    UpdatedGameData = [Round, Scorecard, Dice, _],
+    UpdatedGameData = game(Round, Scorecard, Dice, _),
     toggle_dice_lock(Dice, unlocked, UnlockedDice),
-    AfterTurn = [Round, Scorecard, UnlockedDice, none],
+    AfterTurn = game(Round, Scorecard, UnlockedDice, none),
     print_scorecard(AfterTurn).
 
 /* *************************************************
@@ -104,7 +104,7 @@ Parameters:
  ************************************************ */
 
  handle_rolls(GameData, Player, RollNumber, AfterRolls) :-
-    RollNumber =< 3,
+    RollNumber < 3,
     print_roll_header(RollNumber),
 
     % Update game data with the new roll.
@@ -248,19 +248,22 @@ handle_rerolls(game(_, _, Dice, [CurrScore, MaxScore | _]), computer, NewSet) :-
 handle_rerolls(game(_, _, Dice, [_, _, ToReroll, _, _]), computer, NewSet) :-
     lock_other_dice(Dice, ToReroll, NewSet).
 
-% If the player chooses to reroll.
+% Main handler for rerolling or standing.
 handle_rerolls(game(_, _, Dice, BestStrategy), human, NewSet) :-
     write("Would you like to stand or reroll?"), nl,
-    validate_stand_reroll(BestStrategy, reroll),
+    validate_stand_reroll(BestStrategy, Choice),
+    handle_reroll_choice(Choice, game(_, _, Dice, BestStrategy), NewSet).
+
+% Handle the reroll choice.
+handle_reroll_choice(reroll, game(_, _, Dice, BestStrategy), NewSet) :-
     write("Please input a list of dice faces to reroll."), nl,
     filter_free_dice(Dice, FreeDice),
     count_dice_faces(FreeDice, FreeCounts),
     validate_reroll(BestStrategy, FreeCounts, ToReroll),
     lock_other_dice(Dice, ToReroll, NewSet).
 
-
-% If the player chooses to stand, lock all dice.
-handle_rerolls(game(_, _, Dice, _), human, NewSet) :-
+% Handle the stand choice.
+handle_reroll_choice(stand, game(_, _, Dice, _), NewSet) :-
     toggle_dice_lock(Dice, locked, NewSet).
     
 /* *********************************************************************
@@ -313,8 +316,8 @@ Parameters:
 
 % Skip turn if no categories can be filled.
 choose_category(GameData, _, GameData) :-
-    get_available_categories(GameData, PossibleCategories, false),
-    PossibleCategories = [],
+    get_available_categories(GameData, AvailableCategories),
+    length(AvailableCategories, 0),
     write("No categories can be filled with the current dice set. Skipping turn."), nl.
 
 % Computer chooses a category based on the best strategy.
@@ -327,7 +330,7 @@ choose_category(GameData, computer, AfterTurn) :-
 
 % Player chooses a category.
 choose_category(GameData, human, AfterTurn) :-
-    GameData = [Round, _, Dice, _],
+    GameData = game(Round, _, Dice, _),
     pick_strategy(GameData, BestStrategy),
     write("Please choose a category to fill by its index."), nl,
     get_available_categories(GameData, AvailableCategories, false),
@@ -339,34 +342,3 @@ choose_category(GameData, human, AfterTurn) :-
     write("Please input the current round."), nl,
     validate_round(Round),
     fill_category(GameData, human, ChosenCategory, PointsEarned, AfterTurn).
-
-    
-
-% major things to do
-% print strategy functions [2]
-% handle rerolls [3]
-    % stand or reroll
-    % pick dice
-    % lock others
-% stand or reroll: based on if everything is locked! [1]
-    % simply redoes the handle_rolls function or moves on to choose_category
-% choose_category [2]
-    % computer and player version
-    % skipping turn functionality
-    % validate and/or print choice
-% finish up run_rounds [1]
-    % serialize save
-    % print scores
-% finish tournament [1]
-    % print final
-    % test everything
-
-% rough schedule for today
-% 1 - 2 handle rerolls (start)
-% 2 - 4 senior project class + finish handle rerolls
-    % try to sit in the back and work on this
-% 4 - 5 go to work and do stand or reroll
-% 5 - 6:30 choose category
-% 6:30 - 7:45 finish up run_rounds and tournament
-% go home
-% dinner & prep for other classes & tomorrow

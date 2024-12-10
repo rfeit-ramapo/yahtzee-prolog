@@ -23,7 +23,7 @@ Parameters:
 
 % Base case: If the scorecard is filled, the game is over.
 run_rounds(GameData, FinalData) :-
-    scorecard_filled(GameData),
+    scorecard_filled(GameData, true),
     FinalData = GameData.
 
 % Recursive case: If scorecard not filled, run another round.
@@ -52,7 +52,8 @@ run_round(GameData, FinalData) :-
     print_round_header(RoundNum),
     get_player_order(GameData, Player1, Player2),
     run_turn(GameData, Player1, AfterTurn1),
-    run_turn(GameData, Player2, scorecard_filled(AfterTurn1), FinalData),
+    scorecard_filled(AfterTurn1, Filled),
+    run_turn(AfterTurn1, Player2, Filled, FinalData),
     print_scores(FinalData),
     serialize_save(FinalData).
 
